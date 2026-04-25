@@ -82,10 +82,13 @@ async def booth_detail(booth_id: str, request: Request, db: AsyncSession = Depen
     )
     rent_charges = rent_result.scalars().all()
 
+    today = date.today()
     return templates.TemplateResponse(request, "admin/booths/form.html", {
-         "active": "booths", "booth": booth,
+        "active": "booths", "booth": booth,
         "active_artists": active_artists, "current_artist_id": current_artist_id,
-        "today": date.today().isoformat(),
+        "today": today.isoformat(),
+        "current_year": today.year,
+        "current_month": today.month,
         "rent_charges": rent_charges,
     })
 

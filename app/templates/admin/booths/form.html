@@ -86,14 +86,37 @@
     <form method="post" action="/admin/rent/new">
       <input type="hidden" name="artist_id" value="{{ current_artist_id }}">
       <input type="hidden" name="booth_id" value="{{ booth.id }}">
+      {% set months = ['January','February','March','April','May','June','July','August','September','October','November','December'] %}
       <div class="form-row">
         <div class="form-group">
           <label>Period Start</label>
-          <input type="month" name="period_start" required>
+          <div style="display:flex;gap:6px;">
+            <select name="start_month" style="flex:3;">
+              {% for m in months %}
+              <option value="{{ loop.index }}" {% if loop.index == current_month %}selected{% endif %}>{{ m }}</option>
+              {% endfor %}
+            </select>
+            <select name="start_year" style="flex:2;">
+              {% for y in range(current_year - 1, current_year + 3) %}
+              <option value="{{ y }}" {% if y == current_year %}selected{% endif %}>{{ y }}</option>
+              {% endfor %}
+            </select>
+          </div>
         </div>
         <div class="form-group">
           <label>Period End</label>
-          <input type="month" name="period_end" required>
+          <div style="display:flex;gap:6px;">
+            <select name="end_month" style="flex:3;">
+              {% for m in months %}
+              <option value="{{ loop.index }}" {% if loop.index == current_month %}selected{% endif %}>{{ m }}</option>
+              {% endfor %}
+            </select>
+            <select name="end_year" style="flex:2;">
+              {% for y in range(current_year - 1, current_year + 3) %}
+              <option value="{{ y }}" {% if y == current_year %}selected{% endif %}>{{ y }}</option>
+              {% endfor %}
+            </select>
+          </div>
         </div>
       </div>
       <div class="form-group">

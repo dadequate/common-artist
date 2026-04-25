@@ -20,17 +20,17 @@ router = APIRouter(tags=["rent"])
 async def rent_create(
     artist_id: str = Form(...),
     booth_id: str = Form(...),
-    period_start: str = Form(...),
-    period_end: str = Form(...),
+    start_month: int = Form(...),
+    start_year: int = Form(...),
+    end_month: int = Form(...),
+    end_year: int = Form(...),
     amount: str = Form(...),
     db: AsyncSession = Depends(get_db),
     _: str = Depends(require_admin),
 ):
     try:
-        sy, sm = map(int, period_start.split("-"))
-        ey, em = map(int, period_end.split("-"))
-        p_start = date(sy, sm, 1)
-        p_end = date(ey, em, calendar.monthrange(ey, em)[1])
+        p_start = date(start_year, start_month, 1)
+        p_end = date(end_year, end_month, calendar.monthrange(end_year, end_month)[1])
         amount_cents = round(float(amount) * 100)
     except (ValueError, TypeError):
         return RedirectResponse(f"/admin/booths/{booth_id}", status_code=303)
