@@ -16,14 +16,14 @@ router = APIRouter(tags=["admin"])
 
 @router.get("/admin/login", response_class=HTMLResponse)
 async def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse(request, "login.html", {})
 
 
 @router.post("/admin/login")
 async def login(request: Request, password: str = Form(...)):
     if not verify_admin_password(password):
         return templates.TemplateResponse(
-            "login.html", {"request": request, "error": "Incorrect password"}, status_code=401
+            request, "login.html", {"error": "Incorrect password"}, status_code=401
         )
     token = create_admin_token()
     resp = RedirectResponse("/admin/", status_code=303)
@@ -73,7 +73,7 @@ async def dashboard(request: Request, db: AsyncSession = Depends(get_db), _: str
         "pending_applications": pending_apps,
         "last_sync": None,
     }
-    return templates.TemplateResponse("admin/dashboard.html", {
-        "request": request, "active": "dashboard",
+    return templates.TemplateResponse(request, "admin/dashboard.html", {
+         "active": "dashboard",
         "stats": stats, "recent_sales": recent_sales, "overdue_rent": overdue_rows,
     })

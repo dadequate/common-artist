@@ -27,8 +27,8 @@ async def application_list(
         q = q.where(Application.status == status)
     result = await db.execute(q)
     apps = result.scalars().all()
-    return templates.TemplateResponse("admin/applications/list.html", {
-        "request": request, "active": "applications",
+    return templates.TemplateResponse(request, "admin/applications/list.html", {
+         "active": "applications",
         "applications": apps, "status_filter": status,
     })
 
@@ -42,8 +42,8 @@ async def application_detail(
     app = await db.get(Application, app_id)
     if not app:
         return RedirectResponse("/admin/applications", status_code=303)
-    return templates.TemplateResponse("admin/applications/detail.html", {
-        "request": request, "active": "applications", "app": app,
+    return templates.TemplateResponse(request, "admin/applications/detail.html", {
+         "active": "applications", "app": app,
     })
 
 
@@ -119,7 +119,7 @@ async def application_waitlist(
 
 @router.get("/apply", response_class=HTMLResponse)
 async def public_apply(request: Request):
-    return templates.TemplateResponse("public/apply.html", {"request": request})
+    return templates.TemplateResponse(request, "public/apply.html", {})
 
 
 @router.post("/apply")
@@ -136,8 +136,8 @@ async def public_apply_submit(
                                    Application.status == ApplicationStatus.PENDING)
     )
     if existing:
-        return templates.TemplateResponse("public/apply.html", {
-            "request": request,
+        return templates.TemplateResponse(request, "public/apply.html", {
+            
             "error": "An application with this email is already pending review.",
         })
 
@@ -153,6 +153,6 @@ async def public_apply_submit(
     db.add(app)
     await db.commit()
     logger.info("commonartist.application.submitted", app_id=app.id, email=email)
-    return templates.TemplateResponse("public/apply.html", {
-        "request": request, "submitted": True,
+    return templates.TemplateResponse(request, "public/apply.html", {
+         "submitted": True,
     })
