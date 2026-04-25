@@ -1,1 +1,3 @@
-# POS adapters — Shopify (Phase 2), Square (Phase 4)
+from app.adapters.registry import get_pos_adapter, get_payment_adapter, get_accounting_adapter
+
+__all__ = ["get_pos_adapter", "get_payment_adapter", "get_accounting_adapter"]
