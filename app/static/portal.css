@@ -1,0 +1,103 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --purple: #7C3AED;
+  --purple-light: #EDE9FE;
+  --purple-dark: #5B21B6;
+  --bg: #f8f7ff;
+  --card: #fff;
+  --border: #e0dbd6;
+  --muted: #6B7280;
+  --label: #9CA3AF;
+  --green: #10B981;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: #1F2937;
+  font-size: 15px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* ── Top nav ── */
+.portal-nav {
+  background: var(--purple);
+  color: #fff;
+  padding: 0 16px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.portal-nav-brand { font-size: 16px; font-weight: 700; letter-spacing: .2px; }
+.portal-nav-brand span { font-weight: 400; opacity: .7; font-size: 13px; margin-left: 6px; }
+.portal-nav a { color: rgba(255,255,255,.8); text-decoration: none; font-size: 13px; }
+.portal-nav a:hover { color: #fff; }
+
+/* ── Page ── */
+.page { max-width: 640px; margin: 0 auto; padding: 20px 16px 48px; }
+
+/* ── Cards ── */
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 16px; overflow: hidden; }
+.card-header { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 14px; font-weight: 600; color: #374151; }
+.card-body { padding: 16px; }
+
+/* ── Stat grid ── */
+.stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 12px; text-align: center; }
+.stat-value { font-size: 22px; font-weight: 700; color: var(--purple); }
+.stat-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* ── Table ── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .5px; color: var(--muted); border-bottom: 1px solid var(--border); }
+td { padding: 11px 12px; border-bottom: 1px solid #f3f4f6; }
+tr:last-child td { border-bottom: none; }
+
+/* ── Badge ── */
+.badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.badge-green  { background: #D1FAE5; color: #065F46; }
+.badge-gold   { background: #FEF3C7; color: #92400E; }
+.badge-gray   { background: #F3F4F6; color: #6B7280; }
+.badge-purple { background: var(--purple-light); color: var(--purple-dark); }
+
+/* ── Forms ── */
+.form-group { margin-bottom: 16px; }
+label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 5px; color: #374151; }
+input, textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+  border-radius: 8px; font-size: 14px; font-family: inherit; background: #fff; }
+input:focus, textarea:focus { outline: none; border-color: var(--purple); box-shadow: 0 0 0 2px var(--purple-light); }
+
+/* ── Buttons ── */
+.btn { display: inline-flex; align-items: center; padding: 9px 18px; border-radius: 8px;
+  border: none; cursor: pointer; font-size: 14px; font-weight: 500; text-decoration: none; }
+.btn-primary { background: var(--purple); color: #fff; }
+.btn-primary:hover { background: var(--purple-dark); }
+.btn-ghost { background: transparent; color: #374151; border: 1px solid var(--border); }
+.btn-full { width: 100%; justify-content: center; }
+
+/* ── Login page ── */
+.login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+.login-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 32px 28px; width: 100%; max-width: 380px; }
+.login-logo { font-size: 18px; font-weight: 700; color: var(--purple); margin-bottom: 6px; }
+.login-sub { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+
+/* ── Nav tabs ── */
+.nav-tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+.nav-tab { padding: 8px 14px; font-size: 13px; font-weight: 500; color: var(--muted);
+  text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.nav-tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .stat-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stat-value { font-size: 18px; }
+}

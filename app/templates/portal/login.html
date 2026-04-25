@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Artist Login — CommonArtist</title>
+<link rel="stylesheet" href="/static/portal.css">
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">{{ gallery_name }}</div>
+    <div class="login-sub">Artist portal</div>
+
+    {% if sent %}
+    <div style="background:#EDE9FE;border-radius:8px;padding:16px;font-size:14px;color:#5B21B6;">
+      <strong>Check your email.</strong><br>
+      We sent a login link to that address. It expires in 30 minutes.<br>
+      <span style="font-size:12px;color:#7C3AED;opacity:.8;">No email? Ask your gallery manager to verify your address.</span>
+    </div>
+    {% else %}
+
+    {% if error == 'invalid' %}
+    <div style="background:#FEE2E2;border-radius:8px;padding:12px 14px;font-size:13px;color:#991B1B;margin-bottom:16px;">
+      That login link is invalid.
+    </div>
+    {% elif error == 'expired' %}
+    <div style="background:#FEF3C7;border-radius:8px;padding:12px 14px;font-size:13px;color:#92400E;margin-bottom:16px;">
+      That login link has expired. Request a new one below.
+    </div>
+    {% endif %}
+
+    <form method="post" action="/portal/login">
+      <div class="form-group">
+        <label>Your email address</label>
+        <input type="email" name="email" required placeholder="you@example.com" autofocus>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Send Login Link</button>
+    </form>
+    <p style="font-size:12px;color:var(--muted);margin-top:16px;text-align:center;">
+      We'll email you a link — no password needed.
+    </p>
+    {% endif %}
+  </div>
+</div>
+</body>
+</html>

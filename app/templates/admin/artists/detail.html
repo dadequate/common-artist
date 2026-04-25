@@ -1,0 +1,87 @@
+{% extends "layout.html" %}
+{% block title %}{{ artist.name }}{% endblock %}
+{% block topbar_title %}{{ artist.name }}{% endblock %}
+{% block topbar_actions %}
+  <a href="/admin/artists/{{ artist.id }}/edit" class="btn btn-sm btn-ghost">Edit</a>
+{% endblock %}
+
+{% block content %}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+  <div class="card">
+    <div class="card-header">Profile</div>
+    <div class="card-body" style="font-size:14px;">
+      <div style="margin-bottom:10px;"><span style="color:var(--label);">Email</span><br>{{ artist.email }}</div>
+      <div style="margin-bottom:10px;"><span style="color:var(--label);">Phone</span><br>{{ artist.phone or '—' }}</div>
+      <div style="margin-bottom:10px;"><span style="color:var(--label);">POS Vendor Name</span><br><code style="background:var(--border-light);padding:2px 6px;border-radius:4px;">{{ artist.pos_vendor_name or '—' }}</code></div>
+      <div style="margin-bottom:10px;"><span style="color:var(--label);">Commission Rate</span><br>{{ artist.commission_rate_override or 'Gallery default' }}</div>
+      <div style="margin-bottom:10px;"><span style="color:var(--label);">Status</span><br>
+        {% if artist.status == 'active' %}<span class="badge badge-green">Active</span>
+        {% elif artist.status == 'on_hold' %}<span class="badge badge-gold">On Hold</span>
+        {% elif artist.status == 'departed' %}<span class="badge badge-gray">Departed</span>
+        {% else %}<span class="badge badge-blue">{{ artist.status|title }}</span>{% endif %}
+      </div>
+      <div><span style="color:var(--label);">W-9 on file</span><br>{{ 'Yes' if artist.w9_on_file else 'No' }}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">Booth & Rent</div>
+    <div class="card-body" style="font-size:14px;">
+      {% if current_assignment %}
+      <div style="margin-bottom:10px;"><span style="color:var(--label);">Current Booth</span><br><strong>{{ current_assignment.booth_name }}</strong> ({{ current_assignment.tier }})</div>
+      <div style="margin-bottom:10px;"><span style="color:var(--label);">Monthly Rate</span><br>${{ "%.2f"|format(current_assignment.monthly_rate_cents/100) }}</div>
+      {% else %}
+      <p style="color:var(--label);">No booth assigned. <a href="/admin/booths">Assign a booth</a>.</p>
+      {% endif %}
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border-light);">
+        <span style="color:var(--label);font-size:12px;">RENT BALANCE</span>
+        <div style="font-size:22px;font-weight:700;color:{% if rent_balance > 0 %}var(--accent){% else %}var(--green){% endif %};">
+          ${{ "%.2f"|format(rent_balance/100) }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:20px;">
+  <div class="card-header">Recent Sales <span style="font-weight:400;font-size:13px;color:var(--label);">Last 30 days</span></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Item</th><th>Amount</th><th>Commission</th><th>Net</th><th>Payout</th></tr></thead>
+      <tbody>
+      {% for s in recent_sales %}
+      <tr>
+        <td>{{ s.occurred_at.strftime('%b %d') }}</td>
+        <td style="color:var(--muted);">{{ s.external_id }}</td>
+        <td>${{ "%.2f"|format(s.amount_cents/100) }}</td>
+        <td style="color:var(--muted);">${{ "%.2f"|format(s.commission_cents/100) }}</td>
+        <td style="font-weight:500;">${{ "%.2f"|format(s.net_cents/100) }}</td>
+        <td>{% if s.payout_line_id %}<span class="badge badge-green">Paid</span>{% else %}<span class="badge badge-gray">Pending</span>{% endif %}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" style="color:var(--label);text-align:center;padding:20px;">No sales yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div style="display:flex;gap:10px;">
+  {% if artist.status != 'active' %}
+  <form method="post" action="/admin/artists/{{ artist.id }}/status">
+    <input type="hidden" name="status" value="active">
+    <button class="btn btn-primary">Set Active</button>
+  </form>
+  {% endif %}
+  {% if artist.status == 'active' %}
+  <form method="post" action="/admin/artists/{{ artist.id }}/status">
+    <input type="hidden" name="status" value="on_hold">
+    <button class="btn btn-secondary">Put On Hold</button>
+  </form>
+  <form method="post" action="/admin/artists/{{ artist.id }}/status">
+    <input type="hidden" name="status" value="departed">
+    <button class="btn btn-danger" onclick="return confirm('Mark {{ artist.name }} as departed?')">Mark Departed</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "layout.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block topbar_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="stats">
+  <div class="stat-card">
+    <div class="stat-label">Active Artists</div>
+    <div class="stat-value">{{ stats.active_artists }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Booths Filled</div>
+    <div class="stat-value">{{ stats.booths_filled }} / {{ stats.booths_total }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Pending Applications</div>
+    <div class="stat-value">{{ stats.pending_applications }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Last Sync</div>
+    <div class="stat-value" style="font-size:15px;margin-top:6px;">{{ stats.last_sync or 'Never' }}</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+  <div class="card">
+    <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+      Recent Sales
+      <form method="post" action="/sync/trigger">
+        <button class="btn btn-sm btn-ghost">Sync Now</button>
+      </form>
+    </div>
+    <div class="card-body" style="color:var(--label);font-size:14px;">
+      {% if recent_sales %}
+        <table><thead><tr><th>Artist</th><th>Amount</th><th>When</th></tr></thead><tbody>
+        {% for s in recent_sales %}
+        <tr><td>{{ s.artist_external_id }}</td><td>${{ "%.2f"|format(s.amount_cents/100) }}</td><td>{{ s.occurred_at.strftime('%b %d') }}</td></tr>
+        {% endfor %}
+        </tbody></table>
+      {% else %}
+        No sales synced yet.
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      Overdue Rent
+    </div>
+    <div class="card-body" style="font-size:14px;">
+      {% if overdue_rent %}
+        <table><thead><tr><th>Artist</th><th>Balance</th></tr></thead><tbody>
+        {% for r in overdue_rent %}
+        <tr>
+          <td><a href="/admin/artists/{{ r.artist_id }}">{{ r.artist_name }}</a></td>
+          <td style="color:var(--accent);font-weight:600;">${{ "%.2f"|format(r.balance_cents/100) }}</td>
+        </tr>
+        {% endfor %}
+        </tbody></table>
+      {% else %}
+        <span style="color:var(--label);">No overdue rent.</span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "layout.html" %}
+{% block title %}{{ 'Edit Booth' if booth else 'New Booth' }}{% endblock %}
+{% block topbar_title %}{{ 'Edit ' + booth.name if booth else 'New Booth' }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:480px;">
+  <div class="card-body">
+    <form method="post" action="{{ '/admin/booths/' + booth.id + '/edit' if booth else '/admin/booths/new' }}">
+      <div class="form-group">
+        <label>Booth Name *</label>
+        <input type="text" name="name" value="{{ booth.name if booth else '' }}" required placeholder="e.g. Booth 1, Wall A">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tier *</label>
+          <select name="tier" required>
+            {% for t in ['small', 'large', 'wall', 'special'] %}
+            <option value="{{ t }}" {% if booth and booth.tier == t %}selected{% endif %}>{{ t|title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Monthly Rate ($) *</label>
+          <input type="text" name="monthly_rate" value="{{ "%.2f"|format(booth.monthly_rate_cents/100) if booth else '' }}" required placeholder="200.00">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea name="notes">{{ booth.notes if booth else '' }}</textarea>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">{{ 'Save Changes' if booth else 'Create Booth' }}</button>
+        <a href="/admin/booths" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if booth %}
+<div class="card" style="max-width:480px;margin-top:20px;">
+  <div class="card-header">Assign Artist</div>
+  <div class="card-body">
+    <form method="post" action="/admin/booths/{{ booth.id }}/assign">
+      <div class="form-group">
+        <label>Artist</label>
+        <select name="artist_id">
+          <option value="">— Unassign —</option>
+          {% for a in active_artists %}
+          <option value="{{ a.id }}" {% if current_artist_id == a.id %}selected{% endif %}>{{ a.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Start Date</label>
+        <input type="text" name="started_at" value="{{ today }}" placeholder="YYYY-MM-DD">
+      </div>
+      <button type="submit" class="btn btn-primary">Update Assignment</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

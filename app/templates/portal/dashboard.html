@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard — CommonArtist</title>
+<link rel="stylesheet" href="/static/portal.css">
+</head>
+<body>
+
+<nav class="portal-nav">
+  <div class="portal-nav-brand">{{ gallery_name }} <span>Artist Portal</span></div>
+  <a href="/portal/logout">Logout</a>
+</nav>
+
+<div class="page">
+  <div style="margin-bottom:20px;">
+    <h1 style="font-size:20px;font-weight:700;">Hi, {{ artist.name.split()[0] }}</h1>
+    <p style="color:var(--muted);font-size:13px;">Last 30 days</p>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-value">${{ "%.0f"|format(sales_total/100) }}</div>
+      <div class="stat-label">Sales</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${{ "%.0f"|format(commission_total/100) }}</div>
+      <div class="stat-label">Commission</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${{ "%.0f"|format(net_total/100) }}</div>
+      <div class="stat-label">Your Share</div>
+    </div>
+  </div>
+
+  <div class="nav-tabs">
+    <a href="/portal/dashboard" class="nav-tab active">Overview</a>
+    <a href="/portal/sales" class="nav-tab">All Sales</a>
+  </div>
+
+  <div class="card">
+    <div class="card-header">Recent Sales</div>
+    {% if recent_sales %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Amount</th><th>Commission</th><th>Net</th></tr></thead>
+        <tbody>
+        {% for s in recent_sales[:15] %}
+        <tr>
+          <td style="color:var(--muted);">{{ s.occurred_at.strftime('%b %d') }}</td>
+          <td>${{ "%.2f"|format(s.amount_cents/100) }}</td>
+          <td style="color:var(--muted);">–${{ "%.2f"|format(s.commission_cents/100) }}</td>
+          <td style="font-weight:500;color:var(--purple);">${{ "%.2f"|format(s.net_cents/100) }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if recent_sales|length > 15 %}
+    <div style="padding:10px 14px;border-top:1px solid var(--border);">
+      <a href="/portal/sales" style="font-size:13px;color:var(--purple);text-decoration:none;">View all {{ recent_sales|length }} sales &rarr;</a>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="card-body" style="color:var(--muted);font-size:13px;">No sales in the last 30 days.</div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-header">Payout History</div>
+    {% if payout_rows %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Period</th><th>Amount</th><th>Status</th><th>Method</th></tr></thead>
+        <tbody>
+        {% for p in payout_rows %}
+        <tr>
+          <td style="font-size:12px;color:var(--muted);">{{ p.period }}</td>
+          <td style="font-weight:500;">${{ "%.2f"|format(p.net_cents/100) }}</td>
+          <td>
+            <span class="badge {% if p.status == 'paid' %}badge-green{% elif p.status == 'pending' %}badge-gold{% else %}badge-gray{% endif %}">
+              {{ p.status }}
+            </span>
+          </td>
+          <td style="color:var(--muted);font-size:12px;">{{ p.method or '—' }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="card-body" style="color:var(--muted);font-size:13px;">No payouts yet.</div>
+    {% endif %}
+  </div>
+
+  {% if artist.commission_rate_override %}
+  <div class="card">
+    <div class="card-body" style="font-size:13px;color:var(--muted);">
+      Your commission rate is {{ (artist.commission_rate_override|float * 100)|round|int }}%.
+      Questions? Contact your gallery manager.
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+</body>
+</html>

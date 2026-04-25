@@ -1,0 +1,170 @@
+{% extends "layout.html" %}
+{% block title %}Monitor{% endblock %}
+{% block topbar_title %}Monitor{% endblock %}
+
+{% block content %}
+
+{# ── Stats row ── #}
+<div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:24px;">
+  {% set stats = [
+    ("Artists", active_artists, "/admin/artists"),
+    ("Booths Filled", filled_booths|string + "/" + total_booths|string, "/admin/booths"),
+    ("Vacant", vacant_booths, "/admin/booths"),
+    ("Pending Apps", pending_apps, "/admin/applications"),
+    ("Sales 24h", sales_24h_count, None),
+    ("Draft Runs", draft_payout_runs, "/admin/payouts"),
+  ] %}
+  {% for label, val, link in stats %}
+  <div class="card" style="flex:1;min-width:130px;">
+    <div class="card-body" style="text-align:center;padding:14px 10px;">
+      {% if link %}<a href="{{ link }}" style="text-decoration:none;color:inherit;">{% endif %}
+      <div style="font-size:24px;font-weight:700;color:var(--accent);">{{ val }}</div>
+      <div style="color:var(--label);font-size:12px;margin-top:2px;">{{ label }}</div>
+      {% if link %}</a>{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+
+{# ── Sync health ── #}
+<div class="card">
+  <div class="card-header">POS Sync</div>
+  <div class="card-body" style="padding:0;">
+    {% if sync_health %}
+    {% for s in sync_health %}
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border-light);">
+      <div style="width:10px;height:10px;border-radius:50%;background:{% if s.last_error %}var(--accent){% elif s.stale %}var(--gold){% else %}var(--green){% endif %};flex-shrink:0;"></div>
+      <div style="flex:1;">
+        <div style="font-weight:500;font-size:14px;">{{ s.provider }}</div>
+        <div style="font-size:12px;color:var(--muted);">
+          {% if s.last_synced_at %}{{ s.last_synced_at.strftime('%b %d %H:%M UTC') }}{% else %}Never synced{% endif %}
+          {% if s.stale %}<span class="badge badge-gold" style="margin-left:6px;">stale</span>{% endif %}
+        </div>
+        {% if s.last_error %}<div style="font-size:11px;color:var(--accent);margin-top:2px;">{{ s.last_error[:80] }}</div>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div style="padding:20px 16px;color:var(--label);font-size:13px;">No sync providers configured. Set <code>POS_PROVIDER</code> in environment.</div>
+    {% endif %}
+  </div>
+</div>
+
+{# ── Error log ── #}
+<div class="card">
+  <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+    <span>Errors <span style="color:var(--label);font-weight:400;font-size:13px;">(unresolved)</span></span>
+    {% if errors %}<span class="badge badge-red">{{ errors|length }}</span>{% endif %}
+  </div>
+  {% if errors %}
+  <div style="max-height:320px;overflow-y:auto;">
+    {% for e in errors %}
+    <div style="padding:10px 16px;border-bottom:1px solid var(--border-light);font-size:13px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+        <div>
+          <div style="font-weight:500;color:var(--accent);">{{ e.event }}</div>
+          <div style="color:var(--muted);margin-top:2px;">{{ e.message[:120] }}</div>
+        </div>
+        <form method="post" action="/admin/monitor/errors/{{ e.id }}/resolve" style="flex-shrink:0;">
+          <button class="btn btn-sm btn-ghost" style="font-size:11px;padding:2px 8px;">Resolve</button>
+        </form>
+      </div>
+      <div style="color:var(--label);font-size:11px;margin-top:4px;">{{ e.created_at.strftime('%b %d %H:%M') }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card-body" style="color:var(--label);font-size:13px;">No unresolved errors.</div>
+  {% endif %}
+</div>
+
+</div>{# end grid #}
+
+{# ── AI Assistant ── #}
+<div class="card" style="margin-top:20px;" x-data="aiChat()" x-init="init()">
+  <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+    <span>AI Assistant</span>
+    {% if ai_enabled %}
+    <span class="badge badge-green">Active</span>
+    {% else %}
+    <span class="badge badge-gray">Disabled</span>
+    {% endif %}
+  </div>
+  <div class="card-body">
+    {% if ai_enabled %}
+    <div x-ref="log" style="min-height:120px;max-height:400px;overflow-y:auto;font-size:13px;margin-bottom:14px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px;">
+      <div style="color:var(--label);">Ask anything about your gallery — sync issues, setup help, payout questions, or what to do next.</div>
+      <template x-for="msg in messages" :key="msg.id">
+        <div :style="msg.role === 'user' ? 'text-align:right;margin-top:10px;' : 'margin-top:10px;'">
+          <span :style="msg.role === 'user'
+            ? 'display:inline-block;background:var(--nav);color:#fff;padding:6px 12px;border-radius:12px 12px 2px 12px;max-width:85%;'
+            : 'display:inline-block;background:#fff;border:1px solid var(--border);padding:8px 12px;border-radius:2px 12px 12px 12px;max-width:90%;white-space:pre-wrap;line-height:1.5;'"
+            x-text="msg.text"></span>
+        </div>
+      </template>
+      <div x-show="loading" style="margin-top:10px;color:var(--label);">Thinking...</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <input
+        x-model="input"
+        @keydown.enter.prevent="send()"
+        type="text"
+        placeholder="Ask a question..."
+        style="flex:1;"
+        :disabled="loading"
+      >
+      <button @click="send()" class="btn btn-primary" :disabled="loading || !input.trim()">Send</button>
+    </div>
+    {% else %}
+    <p style="color:var(--label);font-size:13px;margin-bottom:12px;">
+      Set <code style="background:var(--bg);padding:1px 5px;border-radius:3px;">ANTHROPIC_API_KEY</code> in your environment to enable the AI assistant.
+      It will have live context about your gallery's sync health, errors, and operations.
+    </p>
+    <p style="font-size:12px;color:var(--muted);">Uses Claude Haiku (~$0.001 per question). Key is never stored in the database.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+<script>
+function aiChat() {
+  return {
+    messages: [],
+    input: '',
+    loading: false,
+    _id: 0,
+    init() {},
+    async send() {
+      const text = this.input.trim();
+      if (!text || this.loading) return;
+      this.input = '';
+      this.messages.push({ id: ++this._id, role: 'user', text });
+      this.loading = true;
+      this.$nextTick(() => {
+        this.$refs.log.scrollTop = this.$refs.log.scrollHeight;
+      });
+      try {
+        const res = await fetch('/admin/ai/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text }),
+        });
+        const data = await res.json();
+        this.messages.push({ id: ++this._id, role: 'assistant', text: data.reply || data.error || 'No response.' });
+      } catch (e) {
+        this.messages.push({ id: ++this._id, role: 'assistant', text: 'Request failed. Check network.' });
+      }
+      this.loading = false;
+      this.$nextTick(() => {
+        this.$refs.log.scrollTop = this.$refs.log.scrollHeight;
+      });
+    }
+  }
+}
+</script>
+{% endblock %}

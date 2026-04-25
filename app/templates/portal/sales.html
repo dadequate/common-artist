@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sales — CommonArtist</title>
+<link rel="stylesheet" href="/static/portal.css">
+</head>
+<body>
+
+<nav class="portal-nav">
+  <div class="portal-nav-brand">{{ gallery_name }} <span>Artist Portal</span></div>
+  <a href="/portal/logout">Logout</a>
+</nav>
+
+<div class="page">
+  <div style="margin-bottom:20px;">
+    <h1 style="font-size:20px;font-weight:700;">Sales</h1>
+    <p style="color:var(--muted);font-size:13px;">{{ artist.name }}</p>
+  </div>
+
+  <div class="nav-tabs">
+    <a href="/portal/dashboard" class="nav-tab">Overview</a>
+    <a href="/portal/sales" class="nav-tab active">All Sales</a>
+  </div>
+
+  <div class="card">
+    <div class="card-header">{{ sales|length }} Sale{% if sales|length != 1 %}s{% endif %}</div>
+    {% if sales %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Amount</th><th>Commission</th><th>Net</th><th>Source</th></tr></thead>
+        <tbody>
+        {% for s in sales %}
+        <tr>
+          <td style="color:var(--muted);font-size:12px;white-space:nowrap;">{{ s.occurred_at.strftime('%b %d, %Y') }}</td>
+          <td>${{ "%.2f"|format(s.amount_cents/100) }}</td>
+          <td style="color:var(--muted);">–${{ "%.2f"|format(s.commission_cents/100) }}</td>
+          <td style="font-weight:500;color:var(--purple);">${{ "%.2f"|format(s.net_cents/100) }}</td>
+          <td><span class="badge badge-gray" style="font-size:10px;">{{ s.source }}</span></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="card-body" style="color:var(--muted);font-size:13px;">No sales on record.</div>
+    {% endif %}
+  </div>
+</div>
+</body>
+</html>

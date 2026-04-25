@@ -1,0 +1,88 @@
+{% extends "layout.html" %}
+{% block title %}Application — {{ app.name }}{% endblock %}
+{% block topbar_title %}{{ app.name }}{% endblock %}
+{% block topbar_actions %}
+  <a href="/admin/applications" class="btn btn-sm btn-ghost">Back</a>
+{% endblock %}
+
+{% block content %}
+<div style="display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start;">
+
+<div>
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-header">Applicant Info</div>
+    <div class="card-body">
+      <table style="font-size:14px;width:100%;">
+        <tr><td style="color:var(--label);padding:4px 0;width:140px;">Name</td><td style="font-weight:500;">{{ app.name }}</td></tr>
+        <tr><td style="color:var(--label);padding:4px 0;">Email</td><td>{{ app.email }}</td></tr>
+        {% if app.phone %}<tr><td style="color:var(--label);padding:4px 0;">Phone</td><td>{{ app.phone }}</td></tr>{% endif %}
+        {% if app.media_types %}<tr><td style="color:var(--label);padding:4px 0;">Media</td><td>{{ app.media_types }}</td></tr>{% endif %}
+        {% if app.portfolio_url %}<tr><td style="color:var(--label);padding:4px 0;">Portfolio</td><td><a href="{{ app.portfolio_url }}" target="_blank" style="color:var(--nav);">{{ app.portfolio_url }}</a></td></tr>{% endif %}
+        <tr><td style="color:var(--label);padding:4px 0;">Submitted</td><td>{{ app.submitted_at.strftime('%B %d, %Y at %I:%M %p') }}</td></tr>
+        <tr><td style="color:var(--label);padding:4px 0;">Status</td>
+          <td><span class="badge {% if app.status.value == 'approved' %}badge-green{% elif app.status.value == 'declined' %}badge-red{% elif app.status.value == 'waitlisted' %}badge-gold{% else %}badge-gray{% endif %}">{{ app.status.value }}</span></td></tr>
+      </table>
+    </div>
+  </div>
+
+  {% if app.bio %}
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-header">Bio</div>
+    <div class="card-body" style="font-size:14px;line-height:1.7;white-space:pre-wrap;">{{ app.bio }}</div>
+  </div>
+  {% endif %}
+
+  {% if app.artist_statement %}
+  <div class="card">
+    <div class="card-header">Artist Statement</div>
+    <div class="card-body" style="font-size:14px;line-height:1.7;white-space:pre-wrap;">{{ app.artist_statement }}</div>
+  </div>
+  {% endif %}
+</div>
+
+<div>
+  {% if app.status.value == 'pending' %}
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-header">Approve</div>
+    <div class="card-body">
+      <form method="post" action="/admin/applications/{{ app.id }}/approve">
+        <div class="form-group">
+          <label>Notes (optional)</label>
+          <textarea name="notes" placeholder="Internal notes...">{{ app.notes or '' }}</textarea>
+        </div>
+        <button class="btn btn-primary" style="width:100%;">Approve &amp; Create Artist</button>
+      </form>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-header">Waitlist</div>
+    <div class="card-body">
+      <form method="post" action="/admin/applications/{{ app.id }}/waitlist">
+        <button class="btn btn-ghost" style="width:100%;">Move to Waitlist</button>
+      </form>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header">Decline</div>
+    <div class="card-body">
+      <form method="post" action="/admin/applications/{{ app.id }}/decline">
+        <div class="form-group">
+          <label>Notes (optional)</label>
+          <textarea name="notes" placeholder="Reason for declining..."></textarea>
+        </div>
+        <button class="btn btn-ghost" style="width:100%;color:var(--accent);" onclick="return confirm('Decline this application?')">Decline</button>
+      </form>
+    </div>
+  </div>
+  {% else %}
+  <div class="card">
+    <div class="card-body" style="color:var(--label);font-size:13px;">
+      Reviewed {{ app.reviewed_at.strftime('%b %d, %Y') if app.reviewed_at else '' }}
+      {% if app.notes %}<br><br>{{ app.notes }}{% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+</div>
+{% endblock %}

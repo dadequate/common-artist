@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}CommonArtist{% endblock %} — CommonArtist</title>
+<link rel="stylesheet" href="/static/app.css">
+{% block head %}{% endblock %}
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo">{{ gallery_name }}<span>Gallery Management</span></div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-section">Main</div>
+      <a href="/admin/" {% if active == 'dashboard' %}class="active"{% endif %}>Dashboard</a>
+      <a href="/admin/artists" {% if active == 'artists' %}class="active"{% endif %}>Artists</a>
+      <a href="/admin/booths" {% if active == 'booths' %}class="active"{% endif %}>Booths</a>
+      <a href="/admin/applications" {% if active == 'applications' %}class="active"{% endif %}>Applications</a>
+      <div class="sidebar-section">Operations</div>
+      <a href="/admin/payouts" {% if active == 'payouts' %}class="active"{% endif %}>Payouts</a>
+      <a href="/sync/status" {% if active == 'sync' %}class="active"{% endif %}>POS Sync</a>
+      <div class="sidebar-section">System</div>
+      <a href="/admin/monitor" {% if active == 'monitor' %}class="active"{% endif %}>Monitor + AI</a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="/admin/logout" class="sidebar-nav" style="display:block;padding:9px 18px;color:rgba(255,255,255,.6);text-decoration:none;font-size:13px;">Logout</a>
+    </div>
+  </aside>
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">{% block topbar_title %}{% endblock %}</span>
+      <div>{% block topbar_actions %}{% endblock %}</div>
+    </div>
+    <div class="page">
+      {% if flash_error %}<div class="alert alert-error">{{ flash_error }}</div>{% endif %}
+      {% if flash_success %}<div class="alert alert-success">{{ flash_success }}</div>{% endif %}
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+</div>
+{% block scripts %}{% endblock %}
+</body>
+</html>

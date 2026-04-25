@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block title %}Booths{% endblock %}
+{% block topbar_title %}Booths{% endblock %}
+{% block topbar_actions %}<a href="/admin/booths/new" class="btn btn-primary btn-sm">+ Add Booth</a>{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">{{ booths|length }} Booth{% if booths|length != 1 %}s{% endif %}</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Name</th><th>Tier</th><th>Rate / Month</th><th>Current Artist</th><th>Since</th><th></th></tr></thead>
+      <tbody>
+      {% for b in booths %}
+      <tr>
+        <td style="font-weight:500;">{{ b.name }}</td>
+        <td><span class="badge badge-gray">{{ b.tier }}</span></td>
+        <td>${{ "%.0f"|format(b.monthly_rate_cents/100) }}</td>
+        <td>
+          {% if b.artist_name %}
+            <a href="/admin/artists/{{ b.artist_id }}" style="color:var(--nav);">{{ b.artist_name }}</a>
+          {% else %}
+            <span style="color:var(--label);">Vacant</span>
+          {% endif %}
+        </td>
+        <td style="color:var(--muted);">{{ b.started_at.strftime('%b %d, %Y') if b.started_at else '—' }}</td>
+        <td>
+          <a href="/admin/booths/{{ b.id }}" class="btn btn-sm btn-ghost">Manage</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" style="color:var(--label);text-align:center;padding:32px;">No booths yet. <a href="/admin/booths/new">Add one</a>.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

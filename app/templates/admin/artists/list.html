@@ -1,0 +1,44 @@
+{% extends "layout.html" %}
+{% block title %}Artists{% endblock %}
+{% block topbar_title %}Artists{% endblock %}
+{% block topbar_actions %}<a href="/admin/artists/new" class="btn btn-primary btn-sm">+ Add Artist</a>{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    {{ artists|length }} Artist{% if artists|length != 1 %}s{% endif %}
+    <div style="display:flex;gap:8px;">
+      {% for s in ['all','active','on_hold','departed'] %}
+      <a href="?status={{ s }}" class="btn btn-sm btn-ghost {% if status_filter == s %}btn-primary{% endif %}">{{ s|title|replace('_',' ') }}</a>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Booth</th><th>Rent Balance</th><th></th></tr></thead>
+      <tbody>
+      {% for a in artists %}
+      <tr>
+        <td><a href="/admin/artists/{{ a.id }}" style="font-weight:500;color:var(--nav);">{{ a.name }}</a></td>
+        <td style="color:var(--muted);">{{ a.email }}</td>
+        <td>
+          {% if a.status == 'active' %}<span class="badge badge-green">Active</span>
+          {% elif a.status == 'on_hold' %}<span class="badge badge-gold">On Hold</span>
+          {% elif a.status == 'departed' %}<span class="badge badge-gray">Departed</span>
+          {% else %}<span class="badge badge-blue">{{ a.status|title }}</span>{% endif %}
+        </td>
+        <td style="color:var(--muted);">{{ a.booth_name or '—' }}</td>
+        <td>
+          {% if a.rent_balance > 0 %}<span style="color:var(--accent);font-weight:600;">${{ "%.2f"|format(a.rent_balance/100) }}</span>
+          {% else %}<span style="color:var(--label);">—</span>{% endif %}
+        </td>
+        <td><a href="/admin/artists/{{ a.id }}" class="btn btn-sm btn-ghost">View</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" style="color:var(--label);text-align:center;padding:32px;">No artists yet. <a href="/admin/artists/new">Add one</a>.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

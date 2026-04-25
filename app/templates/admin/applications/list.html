@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+{% block title %}Applications{% endblock %}
+{% block topbar_title %}Applications{% endblock %}
+
+{% block content %}
+<div style="display:flex;gap:8px;margin-bottom:20px;">
+  {% for s, label in [('pending','Pending'), ('approved','Approved'), ('declined','Declined'), ('waitlisted','Waitlisted'), ('all','All')] %}
+  <a href="/admin/applications?status={{ s }}"
+     class="btn btn-sm {% if status_filter == s %}btn-primary{% else %}btn-ghost{% endif %}">
+    {{ label }}
+  </a>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <div class="card-header">{{ applications|length }} Application{% if applications|length != 1 %}s{% endif %}</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Name</th><th>Email</th><th>Media</th><th>Status</th><th>Submitted</th><th></th></tr></thead>
+      <tbody>
+      {% for a in applications %}
+      <tr>
+        <td style="font-weight:500;">{{ a.name }}</td>
+        <td style="color:var(--muted);">{{ a.email }}</td>
+        <td>{{ a.media_types or '—' }}</td>
+        <td>
+          <span class="badge {% if a.status.value == 'approved' %}badge-green{% elif a.status.value == 'declined' %}badge-red{% elif a.status.value == 'waitlisted' %}badge-gold{% else %}badge-gray{% endif %}">
+            {{ a.status.value }}
+          </span>
+        </td>
+        <td style="color:var(--muted);">{{ a.submitted_at.strftime('%b %d, %Y') }}</td>
+        <td><a href="/admin/applications/{{ a.id }}" class="btn btn-sm btn-ghost">Review</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" style="color:var(--label);text-align:center;padding:32px;">No applications.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "layout.html" %}
+{% block title %}Payout Run{% endblock %}
+{% block topbar_title %}Payout Run — {{ run.period_start.strftime('%b %d') }} to {{ run.period_end.strftime('%b %d, %Y') }}{% endblock %}
+{% block topbar_actions %}
+  {% if run.status.value == 'draft' %}
+  <form method="post" action="/admin/payouts/{{ run.id }}/approve" style="display:inline;">
+    <button class="btn btn-primary btn-sm">Approve for Payment</button>
+  </form>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap;">
+  <div class="card" style="flex:1;min-width:160px;">
+    <div class="card-body" style="text-align:center;">
+      <div style="font-size:28px;font-weight:700;color:var(--accent);">${{ "%.2f"|format(run.total_cents/100) }}</div>
+      <div style="color:var(--label);font-size:13px;">Total Payout</div>
+    </div>
+  </div>
+  <div class="card" style="flex:1;min-width:160px;">
+    <div class="card-body" style="text-align:center;">
+      <div style="font-size:28px;font-weight:700;">{{ lines|length }}</div>
+      <div style="color:var(--label);font-size:13px;">Artists</div>
+    </div>
+  </div>
+  <div class="card" style="flex:1;min-width:160px;">
+    <div class="card-body" style="text-align:center;">
+      <div style="font-size:28px;font-weight:700;">
+        <span class="badge {% if run.status.value == 'complete' %}badge-green{% elif run.status.value == 'reviewing' %}badge-gold{% else %}badge-gray{% endif %}" style="font-size:14px;">
+          {{ run.status.value }}
+        </span>
+      </div>
+      <div style="color:var(--label);font-size:13px;margin-top:6px;">Status</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">Artist Payouts</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Artist</th>
+          <th>Sales</th>
+          <th>Commission</th>
+          <th>Rent</th>
+          <th>Net</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for line in lines %}
+      <tr>
+        <td style="font-weight:500;"><a href="/admin/artists/{{ line.artist_id }}" style="color:var(--nav);">{{ line.artist_name }}</a></td>
+        <td>${{ "%.2f"|format(line.sales_total_cents/100) }}</td>
+        <td style="color:var(--muted);">–${{ "%.2f"|format(line.commission_cents/100) }}</td>
+        <td style="color:var(--muted);">{% if line.rent_deduction_cents %}–${{ "%.2f"|format(line.rent_deduction_cents/100) }}{% else %}—{% endif %}</td>
+        <td style="font-weight:600;">${{ "%.2f"|format(line.net_cents/100) }}</td>
+        <td>
+          <span class="badge {% if line.status == 'paid' %}badge-green{% elif line.status == 'void' %}badge-gray{% else %}badge-gold{% endif %}">
+            {{ line.status }}
+          </span>
+          {% if line.method %}<span style="color:var(--muted);font-size:12px;margin-left:4px;">{{ line.method }}</span>{% endif %}
+        </td>
+        <td>
+          {% if line.status == 'pending' and run.status.value in ['reviewing', 'draft'] %}
+          <div style="display:flex;gap:6px;align-items:center;">
+            <form method="post" action="/admin/payouts/{{ run.id }}/lines/{{ line.id }}/mark-paid" style="display:flex;gap:4px;">
+              <select name="method" style="padding:4px 6px;font-size:12px;border:1px solid var(--border);border-radius:4px;">
+                <option value="check">Check</option>
+                <option value="ach">ACH</option>
+                <option value="cash">Cash</option>
+                <option value="venmo">Venmo</option>
+              </select>
+              <button class="btn btn-sm btn-primary">Mark Paid</button>
+            </form>
+            <form method="post" action="/admin/payouts/{{ run.id }}/lines/{{ line.id }}/void">
+              <button class="btn btn-sm btn-ghost" onclick="return confirm('Void this payout line?')">Void</button>
+            </form>
+          </div>
+          {% elif line.settled_at %}
+          <span style="color:var(--muted);font-size:12px;">{{ line.settled_at.strftime('%b %d') }}</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

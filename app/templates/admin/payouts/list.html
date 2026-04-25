@@ -1,0 +1,58 @@
+{% extends "layout.html" %}
+{% block title %}Payouts{% endblock %}
+{% block topbar_title %}Payouts{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:480px;margin-bottom:24px;">
+  <div class="card-header">New Payout Run</div>
+  <div class="card-body">
+    <form method="post" action="/admin/payouts/new">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Period Start *</label>
+          <input type="text" name="period_start" placeholder="YYYY-MM-DD" required>
+        </div>
+        <div class="form-group">
+          <label>Period End *</label>
+          <input type="text" name="period_end" value="{{ today }}" placeholder="YYYY-MM-DD" required>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary">Calculate Payouts</button>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">{{ runs|length }} Run{% if runs|length != 1 %}s{% endif %}</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Period</th>
+          <th>Status</th>
+          <th>Total</th>
+          <th>Created</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for r in runs %}
+      <tr>
+        <td>{{ r.period_start.strftime('%b %d') }} – {{ r.period_end.strftime('%b %d, %Y') }}</td>
+        <td>
+          <span class="badge {% if r.status.value == 'complete' %}badge-green{% elif r.status.value == 'reviewing' %}badge-gold{% else %}badge-gray{% endif %}">
+            {{ r.status.value }}
+          </span>
+        </td>
+        <td>${{ "%.2f"|format(r.total_cents/100) }}</td>
+        <td style="color:var(--muted);">{{ r.created_at.strftime('%b %d, %Y') }}</td>
+        <td><a href="/admin/payouts/{{ r.id }}" class="btn btn-sm btn-ghost">View</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" style="color:var(--label);text-align:center;padding:32px;">No payout runs yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
