@@ -80,14 +80,18 @@ async def sales_create(
     if not artist:
         return RedirectResponse("/admin/sales/new", status_code=303)
 
-    amount_cents = round(float(amount) * 100)
+    try:
+        amount_cents = round(float(amount) * 100)
+    except (ValueError, TypeError):
+        return RedirectResponse("/admin/sales/new", status_code=303)
+
     commission_rate = float(artist.commission_rate_override or "0.25")
     commission_cents = int(amount_cents * commission_rate)
 
     try:
         occurred = datetime.fromisoformat(occurred_at).replace(tzinfo=timezone.utc)
     except ValueError:
-        occurred = datetime.now(timezone.utc)
+        return RedirectResponse("/admin/sales/new", status_code=303)
 
     order_id = f"MANUAL-{uuid.uuid4().hex[:8].upper()}"
 

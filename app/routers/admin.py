@@ -6,7 +6,7 @@ from app.templates_env import templates
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import create_admin_token, require_admin, verify_admin_password
+from app.auth import COOKIE_SECURE, create_admin_token, require_admin, verify_admin_password
 from app.database import get_db
 from app.models import Artist, Booth, BoothAssignment, Application, RentCharge, SaleLineItem
 from app.models.artist import ArtistStatus, ApplicationStatus
@@ -27,7 +27,7 @@ async def login(request: Request, password: str = Form(...)):
         )
     token = create_admin_token()
     resp = RedirectResponse("/admin/", status_code=303)
-    resp.set_cookie("admin_token", token, httponly=True, samesite="lax", max_age=3600 * 12)
+    resp.set_cookie("admin_token", token, httponly=True, samesite="lax", secure=COOKIE_SECURE, max_age=3600 * 12)
     return resp
 
 

@@ -6,11 +6,14 @@ from fastapi.staticfiles import StaticFiles
 from app.database import init_db
 from app.monitor import logger
 from app.routers import admin, applications, artists, booths, health, monitor, payouts, portal, rent, sales, sync
-import app.templates_env  # noqa: F401 — registers gallery_name global on import
+import app.templates_env  # noqa: F401 -- registers gallery_name global on import
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    import os
+    if not os.environ.get("ADMIN_PASSWORD"):
+        raise RuntimeError("ADMIN_PASSWORD env var is required")
     await init_db()
     logger.info("commonartist.startup", version="0.1.0")
     yield

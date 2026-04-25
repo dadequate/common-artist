@@ -8,11 +8,14 @@ from app.templates_env import templates
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth import COOKIE_SECURE
 from app.database import get_db
 from app.models import Artist, SaleLineItem
 from app.models.artist import ArtistUser
 from app.models.payouts import PayoutLine, PayoutRun
 from app.monitor import logger
+
+_ALLOWED_ERRORS = {"invalid", "expired"}
 
 router = APIRouter(tags=["portal"])
 
@@ -30,7 +33,7 @@ async def _get_portal_artist(
     )
     if not user:
         return None
-    if user.magic_link_expires_at and user.magic_link_expires_at < datetime.now(timezone.utc):
+    if not user.magic_link_expires_at or user.magic_link_expires_at < datetime.now(timezone.utc):
         return None
     return await db.get(Artist, user.artist_id)
 
@@ -45,8 +48,9 @@ async def portal_home(request: Request, db: AsyncSession = Depends(get_db)):
 
 @router.get("/portal/login", response_class=HTMLResponse)
 async def portal_login_page(request: Request, sent: str = "", error: str = ""):
+    safe_error = error if error in _ALLOWED_ERRORS else ""
     return templates.TemplateResponse(request, "portal/login.html", {
-         "sent": sent == "1", "error": error,
+         "sent": sent == "1", "error": safe_error,
     })
 
 
@@ -95,13 +99,17 @@ async def portal_auth(token: str, db: AsyncSession = Depends(get_db)):
     if user.magic_link_expires_at and user.magic_link_expires_at < now:
         return RedirectResponse("/portal/login?error=expired", status_code=303)
 
+    # Rotate to a fresh session token so the original emailed link is one-shot
+    session_token = secrets.token_urlsafe(32)
+    user.magic_link_token = session_token
     user.last_login_at = now
     user.magic_link_expires_at = now + timedelta(days=30)
     await db.commit()
 
     logger.info("commonartist.portal.login", artist_id=user.artist_id)
     resp = RedirectResponse("/portal/dashboard", status_code=303)
-    resp.set_cookie("portal_token", token, httponly=True, samesite="lax", max_age=3600 * 24 * 30)
+    resp.set_cookie("portal_token", session_token, httponly=True, samesite="lax",
+                    secure=COOKIE_SECURE, max_age=3600 * 24 * 30)
     return resp
 
 
@@ -142,7 +150,7 @@ async def portal_dashboard(request: Request, db: AsyncSession = Depends(get_db))
     for line in payout_lines:
         run = await db.get(PayoutRun, line.payout_run_id)
         payout_rows.append({
-            "period": f"{run.period_start.strftime('%b %d')} – {run.period_end.strftime('%b %d, %Y')}" if run else "—",
+            "period": f"{run.period_start.strftime('%b %d')} - {run.period_end.strftime('%b %d, %Y')}" if run else "--",
             "net_cents": line.net_cents,
             "status": line.status,
             "settled_at": line.settled_at,

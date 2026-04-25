@@ -116,14 +116,19 @@ async def booth_assign(
     current = await db.scalar(
         select(BoothAssignment).where(BoothAssignment.booth_id == booth_id, BoothAssignment.ended_at == None)
     )
+    try:
+        started = date.fromisoformat(started_at)
+    except ValueError:
+        return RedirectResponse(f"/admin/booths/{booth_id}", status_code=303)
+
     if current:
-        current.ended_at = date.fromisoformat(started_at)
+        current.ended_at = started
         logger.info("commonartist.booth.unassigned", booth_id=booth_id, artist_id=current.artist_id)
 
     if artist_id:
         new_assignment = BoothAssignment(
             id=str(uuid.uuid4()), booth_id=booth_id, artist_id=artist_id,
-            started_at=date.fromisoformat(started_at),
+            started_at=started,
         )
         db.add(new_assignment)
         logger.info("commonartist.booth.assigned", booth_id=booth_id, artist_id=artist_id)

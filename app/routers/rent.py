@@ -23,13 +23,20 @@ async def rent_create(
     db: AsyncSession = Depends(get_db),
     _: str = Depends(require_admin),
 ):
+    try:
+        p_start = date.fromisoformat(period_start)
+        p_end = date.fromisoformat(period_end)
+        amount_cents = round(float(amount) * 100)
+    except (ValueError, TypeError):
+        return RedirectResponse(f"/admin/booths/{booth_id}", status_code=303)
+
     charge = RentCharge(
         id=str(uuid.uuid4()),
         artist_id=artist_id,
         booth_id=booth_id,
-        period_start=date.fromisoformat(period_start),
-        period_end=date.fromisoformat(period_end),
-        amount_cents=round(float(amount) * 100),
+        period_start=p_start,
+        period_end=p_end,
+        amount_cents=amount_cents,
         paid_cents=0,
     )
     db.add(charge)
@@ -50,7 +57,10 @@ async def rent_record_payment(
     if not charge:
         return RedirectResponse("/admin/booths", status_code=303)
 
-    cents = round(float(paid_amount) * 100)
+    try:
+        cents = round(float(paid_amount) * 100)
+    except (ValueError, TypeError):
+        return RedirectResponse(f"/admin/booths/{charge.booth_id}", status_code=303)
     charge.paid_cents = min(charge.amount_cents, charge.paid_cents + cents)
     await db.commit()
     logger.info("commonartist.rent.payment_recorded",

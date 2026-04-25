@@ -152,7 +152,10 @@ async def artist_set_status(
     artist = await db.get(Artist, artist_id)
     if artist:
         old = artist.status
-        artist.status = ArtistStatus(status)
+        try:
+            artist.status = ArtistStatus(status)
+        except ValueError:
+            return RedirectResponse(f"/admin/artists/{artist_id}", status_code=303)
         await db.commit()
         logger.info("commonartist.artist.status_changed", artist_id=artist_id, old=old, new=status)
     return RedirectResponse(f"/admin/artists/{artist_id}", status_code=303)

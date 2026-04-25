@@ -4,6 +4,7 @@ from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.adapters import get_pos_adapter
@@ -44,7 +45,6 @@ async def _persist_items(db: AsyncSession, items, source: str) -> int:
                 occurred_at=item.occurred_at,
             )
             db.add(sale)
-            await db.flush()
 
         artist_id = await _resolve_artist(db, item.artist_external_id)
         if not artist_id:
@@ -58,7 +58,8 @@ async def _persist_items(db: AsyncSession, items, source: str) -> int:
                 try:
                     commission_rate = float(artist.commission_rate_override)
                 except ValueError:
-                    pass
+                    logger.error("commonartist.sync.commission.bad_override",
+                                 artist_id=artist_id, value=artist.commission_rate_override)
 
         commission_cents = int(item.amount_cents * commission_rate)
 
@@ -77,9 +78,13 @@ async def _persist_items(db: AsyncSession, items, source: str) -> int:
             occurred_at=item.occurred_at,
         )
         db.add(line)
-        saved += 1
 
-    await db.commit()
+        try:
+            await db.commit()
+            saved += 1
+        except IntegrityError:
+            await db.rollback()
+
     return saved
 
 

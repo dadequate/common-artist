@@ -10,11 +10,16 @@ _SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 _ALGORITHM = "HS256"
 _TOKEN_EXPIRE_HOURS = 12
 
+# Set True when running behind HTTPS (Railway, any https BASE_URL)
+COOKIE_SECURE = os.environ.get("BASE_URL", "http://localhost").startswith("https")
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def verify_admin_password(password: str) -> bool:
     stored = os.environ.get("ADMIN_PASSWORD", "")
+    if not stored:
+        return False
     if stored.startswith("$2b$"):
         return pwd_context.verify(password, stored)
     return password == stored

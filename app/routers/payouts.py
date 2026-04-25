@@ -33,8 +33,11 @@ async def payout_create(
     period_start: str = Form(...), period_end: str = Form(...),
     db: AsyncSession = Depends(get_db), _: str = Depends(require_admin),
 ):
-    start = date.fromisoformat(period_start)
-    end = date.fromisoformat(period_end)
+    try:
+        start = date.fromisoformat(period_start)
+        end = date.fromisoformat(period_end)
+    except ValueError:
+        return RedirectResponse("/admin/payouts?error=bad_date", status_code=303)
 
     start_dt = datetime(start.year, start.month, start.day, tzinfo=timezone.utc)
     end_dt = datetime(end.year, end.month, end.day, 23, 59, 59, tzinfo=timezone.utc)
@@ -68,10 +71,14 @@ async def payout_create(
             RentCharge.paid_cents < RentCharge.amount_cents,
         )
     )
-    rent_by_artist: dict[str, int] = {}
+    rent_charges_by_artist: dict[str, list] = {}
     for rc in rent_result.scalars().all():
-        aid = rc.artist_id
-        rent_by_artist[aid] = rent_by_artist.get(aid, 0) + (rc.amount_cents - rc.paid_cents)
+        rent_charges_by_artist.setdefault(rc.artist_id, []).append(rc)
+
+    rent_owed_by_artist: dict[str, int] = {
+        aid: sum(rc.amount_cents - rc.paid_cents for rc in charges)
+        for aid, charges in rent_charges_by_artist.items()
+    }
 
     run = PayoutRun(
         id=str(uuid.uuid4()),
@@ -84,15 +91,18 @@ async def payout_create(
 
     total_run = 0
     for artist_id, t in totals.items():
-        net = t["sales"] - t["commission"] - rent_by_artist.get(artist_id, 0)
-        net = max(0, net)
+        available = t["sales"] - t["commission"]
+        rent_owed = rent_owed_by_artist.get(artist_id, 0)
+        rent_withheld = min(rent_owed, max(0, available))
+        net = max(0, available - rent_withheld)
+
         line = PayoutLine(
             id=str(uuid.uuid4()),
             payout_run_id=run.id,
             artist_id=artist_id,
             sales_total_cents=t["sales"],
             commission_cents=t["commission"],
-            rent_deduction_cents=rent_by_artist.get(artist_id, 0),
+            rent_deduction_cents=rent_withheld,
             net_cents=net,
             status="pending",
             idempotency_key=str(uuid.uuid4()),
@@ -104,6 +114,16 @@ async def payout_create(
             item = await db.get(SaleLineItem, item_id)
             if item:
                 item.payout_line_id = line.id
+
+        # Mark rent charges as paid, oldest first
+        remaining = rent_withheld
+        for rc in sorted(rent_charges_by_artist.get(artist_id, []), key=lambda r: r.period_start):
+            if remaining <= 0:
+                break
+            can_pay = rc.amount_cents - rc.paid_cents
+            payment = min(can_pay, remaining)
+            rc.paid_cents += payment
+            remaining -= payment
 
         total_run += net
 
@@ -198,7 +218,10 @@ async def payout_line_void(
     line = await db.get(PayoutLine, line_id)
     if line and line.payout_run_id == run_id and line.status == "pending":
         line.status = "void"
-        for item in line.sale_items:
+        items_to_free = (await db.execute(
+            select(SaleLineItem).where(SaleLineItem.payout_line_id == line.id)
+        )).scalars().all()
+        for item in items_to_free:
             item.payout_line_id = None
         await db.commit()
         logger.info("commonartist.payouts.line.void", run_id=run_id, line_id=line_id)
@@ -209,7 +232,10 @@ async def payout_line_void(
 async def payout_webhook(request: Request):
     from app.adapters import get_payment_adapter
     adapter = get_payment_adapter()
-    payload = await request.json()
+    try:
+        payload = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
     headers = dict(request.headers)
 
     try:
