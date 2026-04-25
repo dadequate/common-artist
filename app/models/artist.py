@@ -53,7 +53,7 @@ class ArtistUser(Base):
 
     id:                   Mapped[str]           = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     artist_id:            Mapped[str]           = mapped_column(ForeignKey("artists.id"), unique=True)
-    magic_link_token:     Mapped[str | None]    = mapped_column(String(200), index=True)
+    magic_link_token:     Mapped[str | None]    = mapped_column(String(200), unique=True)
     magic_link_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_login_at:        Mapped[datetime | None]  = mapped_column(DateTime(timezone=True))
 

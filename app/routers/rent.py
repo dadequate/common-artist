@@ -3,10 +3,12 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, Form
 from fastapi.responses import RedirectResponse
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import require_admin
 from app.database import get_db
+from app.models import BoothAssignment
 from app.models.booth import RentCharge
 from app.monitor import logger
 
@@ -28,6 +30,17 @@ async def rent_create(
         p_end = date.fromisoformat(period_end)
         amount_cents = round(float(amount) * 100)
     except (ValueError, TypeError):
+        return RedirectResponse(f"/admin/booths/{booth_id}", status_code=303)
+
+    assignment = await db.scalar(
+        select(BoothAssignment).where(
+            BoothAssignment.booth_id == booth_id,
+            BoothAssignment.artist_id == artist_id,
+            BoothAssignment.ended_at == None,
+        )
+    )
+    if not assignment:
+        logger.warning("commonartist.rent.mismatch", artist_id=artist_id, booth_id=booth_id)
         return RedirectResponse(f"/admin/booths/{booth_id}", status_code=303)
 
     charge = RentCharge(
