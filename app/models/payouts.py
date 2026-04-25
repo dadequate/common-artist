@@ -43,7 +43,7 @@ class PayoutRun(Base):
     id:           Mapped[str]             = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     period_start: Mapped[date]            = mapped_column(Date)
     period_end:   Mapped[date]            = mapped_column(Date)
-    status:       Mapped[PayoutRunStatus] = mapped_column(Enum(PayoutRunStatus), default=PayoutRunStatus.DRAFT)
+    status:       Mapped[PayoutRunStatus] = mapped_column(Enum(PayoutRunStatus, native_enum=False), default=PayoutRunStatus.DRAFT)
     total_cents:  Mapped[int]             = mapped_column(Integer, default=0)
     created_at:   Mapped[datetime]        = mapped_column(DateTime(timezone=True), server_default=func.now())
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
