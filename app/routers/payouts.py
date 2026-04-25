@@ -218,11 +218,33 @@ async def payout_line_void(
     line = await db.get(PayoutLine, line_id)
     if line and line.payout_run_id == run_id and line.status == "pending":
         line.status = "void"
+
         items_to_free = (await db.execute(
             select(SaleLineItem).where(SaleLineItem.payout_line_id == line.id)
         )).scalars().all()
         for item in items_to_free:
             item.payout_line_id = None
+
+        # Reverse rent paid_cents for this line's deduction (newest charges first)
+        if line.rent_deduction_cents > 0:
+            rent_charges = (await db.execute(
+                select(RentCharge)
+                .where(RentCharge.artist_id == line.artist_id)
+                .order_by(RentCharge.period_start.desc())
+            )).scalars().all()
+            remaining = line.rent_deduction_cents
+            for rc in rent_charges:
+                if remaining <= 0:
+                    break
+                reversal = min(rc.paid_cents, remaining)
+                rc.paid_cents -= reversal
+                remaining -= reversal
+
+        # Recompute run total
+        run = await db.get(PayoutRun, run_id)
+        if run:
+            run.total_cents = max(0, run.total_cents - line.net_cents)
+
         await db.commit()
         logger.info("commonartist.payouts.line.void", run_id=run_id, line_id=line_id)
     return RedirectResponse(f"/admin/payouts/{run_id}", status_code=303)

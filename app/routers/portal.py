@@ -1,3 +1,4 @@
+import asyncio
 import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -79,7 +80,7 @@ async def portal_login_submit(
                     artist_id=artist.id, expires=expires.isoformat())
         try:
             from app.email import send_magic_link
-            send_magic_link(artist.email, token)
+            await asyncio.to_thread(send_magic_link, artist.email, token)
         except Exception as e:
             logger.error("commonartist.portal.magic_link.email_failed",
                          artist_id=artist.id, error=str(e))

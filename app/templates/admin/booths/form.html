@@ -26,7 +26,7 @@
       </div>
       <div class="form-group">
         <label>Notes</label>
-        <textarea name="notes">{{ booth.notes if booth else '' }}</textarea>
+        <textarea name="notes">{{ (booth.notes or '') if booth else '' }}</textarea>
       </div>
       <div class="form-actions">
         <button type="submit" class="btn btn-primary">{{ 'Save Changes' if booth else 'Create Booth' }}</button>

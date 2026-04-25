@@ -14,6 +14,10 @@ async def lifespan(app: FastAPI):
     import os
     if not os.environ.get("ADMIN_PASSWORD"):
         raise RuntimeError("ADMIN_PASSWORD env var is required")
+    from app.auth import COOKIE_SECURE
+    if not COOKIE_SECURE:
+        logger.warning("commonartist.startup.insecure_cookies",
+                       note="Set BASE_URL=https://... to enable Secure cookie flag")
     await init_db()
     logger.info("commonartist.startup", version="0.1.0")
     yield

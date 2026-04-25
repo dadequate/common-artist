@@ -17,5 +17,5 @@ class SquareAdapter:
     async def fetch_sales(self, since: datetime) -> list[SaleLineItem]:
         raise NotImplementedError("Square integration coming in Phase 4")
 
-    async def handle_webhook(self, payload: dict, headers: dict) -> list[SaleLineItem]:
+    async def handle_webhook(self, payload: dict, headers: dict, raw_body: bytes = b"") -> list[SaleLineItem]:
         raise NotImplementedError("Square integration coming in Phase 4")

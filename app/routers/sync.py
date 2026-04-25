@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.adapters import get_pos_adapter
+from app.auth import require_admin
 from app.database import get_db
 from app.models import Artist, Sale, SaleLineItem
 from app.models.monitor import ErrorLog, SyncCursor
@@ -123,7 +124,7 @@ async def sync_status(db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/sync/trigger")
-async def sync_trigger(db: AsyncSession = Depends(get_db)):
+async def sync_trigger(db: AsyncSession = Depends(get_db), _: str = Depends(require_admin)):
     adapter = get_pos_adapter()
     since = datetime.now(timezone.utc) - timedelta(hours=_DEFAULT_LOOKBACK_HOURS)
     try:
@@ -151,11 +152,16 @@ async def sync_webhook(provider: str, request: Request, db: AsyncSession = Depen
             detail=f"Active POS provider is {adapter.provider_name!r}, not {provider!r}",
         )
 
-    payload = await request.json()
+    raw_body = await request.body()
+    try:
+        import json
+        payload = json.loads(raw_body)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
     headers = dict(request.headers)
 
     try:
-        items = await adapter.handle_webhook(payload, headers)
+        items = await adapter.handle_webhook(payload, headers, raw_body=raw_body)
     except ValueError as e:
         logger.error("commonartist.sync.webhook.invalid", provider=provider, error=str(e))
         await _log_error(db, "commonartist.sync.webhook.invalid", str(e), {"provider": provider})

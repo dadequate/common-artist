@@ -20,5 +20,5 @@ class ManualAdapter:
         logger.info("commonartist.pos.sync.completed", provider=self.provider_name, count=0)
         return []
 
-    async def handle_webhook(self, payload: dict, headers: dict) -> list[SaleLineItem]:
+    async def handle_webhook(self, payload: dict, headers: dict, raw_body: bytes = b"") -> list[SaleLineItem]:
         raise NotImplementedError("ManualAdapter has no webhook source")

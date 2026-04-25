@@ -65,8 +65,8 @@ class ShopifyAdapter:
         logger.info("commonartist.pos.sync.completed", provider=self.provider_name, count=len(items))
         return items
 
-    async def handle_webhook(self, payload: dict, headers: dict) -> list[SaleLineItem]:
-        self._verify_webhook(payload, headers)
+    async def handle_webhook(self, payload: dict, headers: dict, raw_body: bytes = b"") -> list[SaleLineItem]:
+        self._verify_webhook(raw_body, headers)
         topic = headers.get("x-shopify-topic", "")
         if topic not in ("orders/paid", "orders/updated"):
             return []
@@ -114,15 +114,12 @@ class ShopifyAdapter:
                     total += ri.get("quantity", 0)
         return total
 
-    def _verify_webhook(self, payload: dict, headers: dict) -> None:
-        import json
-        body = json.dumps(payload, separators=(",", ":")).encode()
-        sig = headers.get("x-shopify-hmac-sha256", "")
-        expected = hmac.new(
-            self._webhook_secret.encode(), body, hashlib.sha256
-        ).hexdigest()
+    def _verify_webhook(self, raw_body: bytes, headers: dict) -> None:
         import base64
-        expected_b64 = base64.b64encode(expected.encode()).decode()
+        sig = headers.get("x-shopify-hmac-sha256", "")
+        expected_b64 = base64.b64encode(
+            hmac.new(self._webhook_secret.encode(), raw_body, hashlib.sha256).digest()
+        ).decode()
         if not hmac.compare_digest(sig, expected_b64):
             raise ValueError("Shopify webhook signature invalid")
 
