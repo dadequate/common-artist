@@ -11,6 +11,7 @@ from app.auth import require_admin
 from app.database import get_db
 from app.models import Artist, Booth, BoothAssignment
 from app.models.artist import ArtistStatus
+from app.models.booth import RentCharge
 from app.monitor import logger
 
 router = APIRouter(tags=["booths"])
@@ -34,15 +35,15 @@ async def booth_list(request: Request, db: AsyncSession = Depends(get_db), _: st
             started_at = assignment.started_at
         rows.append({**b.__dict__, "artist_name": artist_name, "artist_id": artist_id, "started_at": started_at})
 
-    return templates.TemplateResponse("admin/booths/list.html", {
-        "request": request, "active": "booths", "booths": rows,
+    return templates.TemplateResponse(request, "admin/booths/list.html", {
+         "active": "booths", "booths": rows,
     })
 
 
 @router.get("/admin/booths/new", response_class=HTMLResponse)
 async def booth_new(request: Request, _: str = Depends(require_admin)):
-    return templates.TemplateResponse("admin/booths/form.html", {
-        "request": request, "active": "booths", "booth": None,
+    return templates.TemplateResponse(request, "admin/booths/form.html", {
+         "active": "booths", "booth": None,
         "active_artists": [], "current_artist_id": None, "today": date.today().isoformat(),
     })
 
@@ -76,10 +77,16 @@ async def booth_detail(booth_id: str, request: Request, db: AsyncSession = Depen
     artists_result = await db.execute(select(Artist).where(Artist.status == ArtistStatus.ACTIVE).order_by(Artist.name))
     active_artists = artists_result.scalars().all()
 
-    return templates.TemplateResponse("admin/booths/form.html", {
-        "request": request, "active": "booths", "booth": booth,
+    rent_result = await db.execute(
+        select(RentCharge).where(RentCharge.booth_id == booth_id).order_by(RentCharge.period_start.desc())
+    )
+    rent_charges = rent_result.scalars().all()
+
+    return templates.TemplateResponse(request, "admin/booths/form.html", {
+         "active": "booths", "booth": booth,
         "active_artists": active_artists, "current_artist_id": current_artist_id,
         "today": date.today().isoformat(),
+        "rent_charges": rent_charges,
     })
 
 

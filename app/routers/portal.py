@@ -45,8 +45,8 @@ async def portal_home(request: Request, db: AsyncSession = Depends(get_db)):
 
 @router.get("/portal/login", response_class=HTMLResponse)
 async def portal_login_page(request: Request, sent: str = "", error: str = ""):
-    return templates.TemplateResponse("portal/login.html", {
-        "request": request, "sent": sent == "1", "error": error,
+    return templates.TemplateResponse(request, "portal/login.html", {
+         "sent": sent == "1", "error": error,
     })
 
 
@@ -149,8 +149,8 @@ async def portal_dashboard(request: Request, db: AsyncSession = Depends(get_db))
             "method": line.method,
         })
 
-    return templates.TemplateResponse("portal/dashboard.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "portal/dashboard.html", {
+        
         "artist": artist,
         "recent_sales": recent_sales,
         "sales_total": sales_total,
@@ -174,6 +174,6 @@ async def portal_sales(request: Request, db: AsyncSession = Depends(get_db)):
     )
     sales = result.scalars().all()
 
-    return templates.TemplateResponse("portal/sales.html", {
-        "request": request, "artist": artist, "sales": sales,
+    return templates.TemplateResponse(request, "portal/sales.html", {
+         "artist": artist, "sales": sales,
     })

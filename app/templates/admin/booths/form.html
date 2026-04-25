@@ -38,6 +38,77 @@
 
 {% if booth %}
 <div class="card" style="max-width:480px;margin-top:20px;">
+  <div class="card-header">Rent Charges</div>
+  <div class="card-body">
+    {% if rent_charges %}
+    <table style="width:100%;font-size:13px;margin-bottom:16px;">
+      <thead><tr>
+        <th style="text-align:left;padding:4px 0;color:var(--label);">Period</th>
+        <th style="text-align:left;padding:4px 0;color:var(--label);">Amount</th>
+        <th style="text-align:left;padding:4px 0;color:var(--label);">Paid</th>
+        <th style="text-align:left;padding:4px 0;color:var(--label);">Balance</th>
+        <th></th>
+      </tr></thead>
+      <tbody>
+      {% for rc in rent_charges %}
+      <tr style="border-top:1px solid var(--border-light);">
+        <td style="padding:6px 0;">{{ rc.period_start.strftime('%b %d') }} – {{ rc.period_end.strftime('%b %d, %Y') }}</td>
+        <td>${{ "%.2f"|format(rc.amount_cents/100) }}</td>
+        <td style="color:var(--green);">${{ "%.2f"|format(rc.paid_cents/100) }}</td>
+        <td {% if rc.balance_cents > 0 %}style="color:var(--accent);font-weight:600;"{% else %}style="color:var(--label);"{% endif %}>
+          ${{ "%.2f"|format(rc.balance_cents/100) }}
+        </td>
+        <td style="display:flex;gap:6px;align-items:center;padding:6px 0;">
+          {% if rc.balance_cents > 0 %}
+          <form method="post" action="/admin/rent/{{ rc.id }}/pay" style="display:flex;gap:4px;">
+            <input type="text" name="paid_amount" value="{{ "%.2f"|format(rc.balance_cents/100) }}"
+              style="width:72px;padding:3px 6px;font-size:12px;">
+            <button class="btn btn-sm btn-primary" style="font-size:11px;padding:4px 8px;">Pay</button>
+          </form>
+          {% else %}
+          <span class="badge badge-green" style="font-size:10px;">paid</span>
+          {% endif %}
+          {% if rc.paid_cents == 0 %}
+          <form method="post" action="/admin/rent/{{ rc.id }}/delete">
+            <button class="btn btn-sm btn-ghost" style="font-size:11px;padding:4px 8px;color:var(--label);" onclick="return confirm('Delete this charge?')">Del</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:var(--label);font-size:13px;margin-bottom:16px;">No rent charges recorded.</p>
+    {% endif %}
+
+    {% if current_artist_id %}
+    <form method="post" action="/admin/rent/new">
+      <input type="hidden" name="artist_id" value="{{ current_artist_id }}">
+      <input type="hidden" name="booth_id" value="{{ booth.id }}">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Period Start</label>
+          <input type="text" name="period_start" placeholder="YYYY-MM-DD" required>
+        </div>
+        <div class="form-group">
+          <label>Period End</label>
+          <input type="text" name="period_end" placeholder="YYYY-MM-DD" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Amount ($)</label>
+        <input type="text" name="amount" value="{{ "%.2f"|format(booth.monthly_rate_cents/100) }}" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Add Charge</button>
+    </form>
+    {% else %}
+    <p style="color:var(--label);font-size:13px;">Assign an artist before adding rent charges.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card" style="max-width:480px;margin-top:20px;">
   <div class="card-header">Assign Artist</div>
   <div class="card-body">
     <form method="post" action="/admin/booths/{{ booth.id }}/assign">

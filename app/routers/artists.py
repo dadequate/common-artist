@@ -39,15 +39,15 @@ async def artist_list(request: Request, status: str = "all", db: AsyncSession = 
 
         rows.append({**a.__dict__, "booth_name": booth_name, "rent_balance": rent_balance})
 
-    return templates.TemplateResponse("admin/artists/list.html", {
-        "request": request, "active": "artists",
+    return templates.TemplateResponse(request, "admin/artists/list.html", {
+         "active": "artists",
         "artists": rows, "status_filter": status,
     })
 
 
 @router.get("/admin/artists/new", response_class=HTMLResponse)
 async def artist_new(request: Request, _: str = Depends(require_admin)):
-    return templates.TemplateResponse("admin/artists/form.html", {"request": request, "active": "artists", "artist": None})
+    return templates.TemplateResponse(request, "admin/artists/form.html", { "active": "artists", "artist": None})
 
 
 @router.post("/admin/artists/new")
@@ -101,8 +101,8 @@ async def artist_detail(artist_id: str, request: Request, db: AsyncSession = Dep
     )
     recent_sales = sales_result.scalars().all()
 
-    return templates.TemplateResponse("admin/artists/detail.html", {
-        "request": request, "active": "artists",
+    return templates.TemplateResponse(request, "admin/artists/detail.html", {
+         "active": "artists",
         "artist": artist, "current_assignment": current_assignment,
         "rent_balance": rent_balance, "recent_sales": recent_sales,
     })
@@ -113,7 +113,7 @@ async def artist_edit(artist_id: str, request: Request, db: AsyncSession = Depen
     artist = await db.get(Artist, artist_id)
     if not artist:
         return RedirectResponse("/admin/artists", status_code=303)
-    return templates.TemplateResponse("admin/artists/form.html", {"request": request, "active": "artists", "artist": artist})
+    return templates.TemplateResponse(request, "admin/artists/form.html", { "active": "artists", "artist": artist})
 
 
 @router.post("/admin/artists/{artist_id}/edit")

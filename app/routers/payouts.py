@@ -22,8 +22,8 @@ async def payout_list(request: Request, db: AsyncSession = Depends(get_db), _: s
         select(PayoutRun).order_by(PayoutRun.created_at.desc()).limit(50)
     )
     runs = result.scalars().all()
-    return templates.TemplateResponse("admin/payouts/list.html", {
-        "request": request, "active": "payouts", "runs": runs,
+    return templates.TemplateResponse(request, "admin/payouts/list.html", {
+         "active": "payouts", "runs": runs,
         "today": date.today().isoformat(),
     })
 
@@ -145,8 +145,8 @@ async def payout_detail(run_id: str, request: Request, db: AsyncSession = Depend
 
     rows.sort(key=lambda r: r["artist_name"])
 
-    return templates.TemplateResponse("admin/payouts/detail.html", {
-        "request": request, "active": "payouts", "run": run, "lines": rows,
+    return templates.TemplateResponse(request, "admin/payouts/detail.html", {
+         "active": "payouts", "run": run, "lines": rows,
     })
 
 

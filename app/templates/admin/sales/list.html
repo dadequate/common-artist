@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+{% block title %}Sales{% endblock %}
+{% block topbar_title %}Sales{% endblock %}
+{% block topbar_actions %}<a href="/admin/sales/new" class="btn btn-primary btn-sm">+ Record Sale</a>{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">{{ rows|length }} Sale{% if rows|length != 1 %}s{% endif %} (last 200)</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Artist</th><th>Amount</th><th>Commission</th><th>Net</th><th>Source</th><th>Payout</th><th></th></tr></thead>
+      <tbody>
+      {% for r in rows %}
+      <tr>
+        <td style="color:var(--muted);font-size:13px;white-space:nowrap;">{{ r.occurred_at.strftime('%b %d, %Y') }}</td>
+        <td>
+          {% if r.artist_id %}
+            <a href="/admin/artists/{{ r.artist_id }}" style="color:var(--nav);">{{ r.artist_name }}</a>
+          {% else %}
+            <span style="color:var(--label);">{{ r.artist_name }}</span>
+          {% endif %}
+        </td>
+        <td>${{ "%.2f"|format(r.amount_cents/100) }}</td>
+        <td style="color:var(--muted);">–${{ "%.2f"|format(r.commission_cents/100) }}</td>
+        <td style="font-weight:500;">${{ "%.2f"|format(r.net_cents/100) }}</td>
+        <td><span class="badge badge-gray">{{ r.source }}</span></td>
+        <td>
+          {% if r.payout_line_id %}
+            <span class="badge badge-green" style="font-size:10px;">paid out</span>
+          {% else %}
+            <span style="color:var(--label);font-size:12px;">pending</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if r.source == 'manual' and not r.payout_line_id %}
+          <form method="post" action="/admin/sales/{{ r.id }}/delete" style="display:inline;">
+            <button class="btn btn-sm btn-ghost" style="color:var(--label);" onclick="return confirm('Delete this sale?')">Delete</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8" style="color:var(--label);text-align:center;padding:32px;">No sales yet. <a href="/admin/sales/new">Record one manually</a> or configure POS_PROVIDER in your environment.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

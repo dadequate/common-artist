@@ -102,8 +102,8 @@ async def monitor_page(
     _: str = Depends(require_admin),
 ):
     ctx = await _build_context(db)
-    return templates.TemplateResponse("admin/monitor.html", {
-        "request": request, "active": "monitor", **ctx,
+    return templates.TemplateResponse(request, "admin/monitor.html", {
+         "active": "monitor", **ctx,
     })
 
 
