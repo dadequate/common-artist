@@ -1,3 +1,4 @@
+import calendar
 import uuid
 from datetime import date
 
@@ -26,8 +27,10 @@ async def rent_create(
     _: str = Depends(require_admin),
 ):
     try:
-        p_start = date.fromisoformat(period_start)
-        p_end = date.fromisoformat(period_end)
+        sy, sm = map(int, period_start.split("-"))
+        ey, em = map(int, period_end.split("-"))
+        p_start = date(sy, sm, 1)
+        p_end = date(ey, em, calendar.monthrange(ey, em)[1])
         amount_cents = round(float(amount) * 100)
     except (ValueError, TypeError):
         return RedirectResponse(f"/admin/booths/{booth_id}", status_code=303)
