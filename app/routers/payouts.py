@@ -250,6 +250,61 @@ async def payout_line_void(
     return RedirectResponse(f"/admin/payouts/{run_id}", status_code=303)
 
 
+@router.get("/admin/payouts/{run_id}/statement", response_class=HTMLResponse)
+async def payout_statement(run_id: str, request: Request, db: AsyncSession = Depends(get_db), _: str = Depends(require_admin)):
+    run = await db.get(PayoutRun, run_id)
+    if not run:
+        return RedirectResponse("/admin/payouts", status_code=303)
+
+    lines_result = await db.execute(
+        select(PayoutLine)
+        .where(PayoutLine.payout_run_id == run_id)
+        .where(PayoutLine.status != "void")
+    )
+    lines = lines_result.scalars().all()
+
+    import os
+    gallery_name = os.environ.get("GALLERY_NAME", "The Gallery")
+
+    rows = []
+    for line in sorted(lines, key=lambda l: l.artist_id):
+        artist = await db.get(Artist, line.artist_id)
+        items_result = await db.execute(
+            select(SaleLineItem)
+            .where(SaleLineItem.payout_line_id == line.id)
+            .order_by(SaleLineItem.occurred_at)
+        )
+        sale_items = items_result.scalars().all()
+        rows.append({
+            "artist_name": artist.name if artist else line.artist_id,
+            "artist_id": line.artist_id,
+            "sales_total_cents": line.sales_total_cents,
+            "commission_cents": line.commission_cents,
+            "rent_deduction_cents": line.rent_deduction_cents,
+            "net_cents": line.net_cents,
+            "status": line.status,
+            "method": line.method,
+            "settled_at": line.settled_at,
+            "sale_items": [
+                {
+                    "occurred_at": item.occurred_at,
+                    "amount_cents": item.amount_cents,
+                    "commission_cents": item.commission_cents,
+                    "net_cents": item.net_cents,
+                }
+                for item in sale_items
+            ],
+        })
+
+    rows.sort(key=lambda r: r["artist_name"])
+
+    return templates.TemplateResponse(request, "admin/payouts/statement.html", {
+        "run": run,
+        "rows": rows,
+        "gallery_name": gallery_name,
+    })
+
+
 @router.post("/admin/payouts/webhook")
 async def payout_webhook(request: Request):
     from app.adapters import get_payment_adapter

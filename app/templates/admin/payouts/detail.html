@@ -2,6 +2,7 @@
 {% block title %}Payout Run{% endblock %}
 {% block topbar_title %}Payout Run — {{ run.period_start.strftime('%b %d') }} to {{ run.period_end.strftime('%b %d, %Y') }}{% endblock %}
 {% block topbar_actions %}
+  <a href="/admin/payouts/{{ run.id }}/statement" class="btn btn-ghost btn-sm" target="_blank">Print Statements</a>
   {% if run.status.value == 'draft' %}
   <form method="post" action="/admin/payouts/{{ run.id }}/approve" style="display:inline;">
     <button class="btn btn-primary btn-sm">Approve for Payment</button>

@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Payout Statements — {{ run.period_start.strftime('%b %d') }} to {{ run.period_end.strftime('%b %d, %Y') }}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Georgia, serif; font-size: 13px; color: #111; background: #f4f4f4; }
+
+  .screen-bar {
+    position: fixed; top: 0; left: 0; right: 0;
+    background: #1a1a1a; color: #fff;
+    padding: 10px 24px; display: flex; gap: 12px; align-items: center;
+    z-index: 100; font-family: system-ui, sans-serif; font-size: 13px;
+  }
+  .screen-bar a, .screen-bar button {
+    background: #fff; color: #1a1a1a; border: none; border-radius: 4px;
+    padding: 6px 14px; cursor: pointer; font-size: 13px; text-decoration: none;
+    font-family: system-ui, sans-serif;
+  }
+  .screen-bar button { background: #D35147; color: #fff; }
+  .screen-bar span { color: rgba(255,255,255,.6); margin-left: auto; font-size: 12px; }
+
+  .pages { padding-top: 52px; }
+
+  .statement {
+    background: #fff;
+    width: 8.5in;
+    min-height: 11in;
+    margin: 24px auto;
+    padding: 0.75in 0.9in;
+    box-shadow: 0 2px 8px rgba(0,0,0,.12);
+    page-break-after: always;
+  }
+  .statement:last-child { page-break-after: avoid; }
+
+  .header { border-bottom: 2px solid #111; padding-bottom: 12px; margin-bottom: 20px; }
+  .gallery-name { font-size: 20px; font-weight: bold; letter-spacing: .3px; }
+  .statement-title { font-size: 13px; color: #555; margin-top: 2px; }
+
+  .meta { display: flex; gap: 48px; margin-bottom: 24px; }
+  .meta-block label { font-size: 10px; text-transform: uppercase; letter-spacing: .8px; color: #888; }
+  .meta-block .value { font-size: 14px; font-weight: 600; margin-top: 2px; }
+
+  table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+  thead th {
+    text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: .8px;
+    color: #888; padding: 4px 0; border-bottom: 1px solid #ddd;
+  }
+  thead th.right { text-align: right; }
+  tbody td { padding: 6px 0; border-bottom: 1px solid #f0f0f0; font-size: 12px; }
+  tbody td.right { text-align: right; font-variant-numeric: tabular-nums; }
+  tbody tr:last-child td { border-bottom: none; }
+
+  .no-items { color: #888; font-style: italic; padding: 12px 0; text-align: center; font-size: 12px; }
+
+  .totals { margin-top: 4px; border-top: 1px solid #ddd; }
+  .totals-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 12px; }
+  .totals-row.deduction { color: #888; }
+  .totals-row.net {
+    border-top: 2px solid #111; margin-top: 4px; padding-top: 8px;
+    font-size: 15px; font-weight: bold;
+  }
+
+  .footer { margin-top: 40px; display: flex; gap: 48px; }
+  .sig-block { flex: 1; border-top: 1px solid #aaa; padding-top: 6px; font-size: 11px; color: #666; }
+
+  .status-note { margin-top: 16px; font-size: 11px; color: #888; font-style: italic; }
+
+  @media print {
+    body { background: white; }
+    .screen-bar { display: none; }
+    .pages { padding-top: 0; }
+    .statement {
+      box-shadow: none; margin: 0;
+      width: 100%; min-height: unset;
+      padding: 0.6in 0.75in;
+    }
+  }
+  @page { margin: 0; size: letter portrait; }
+</style>
+</head>
+<body>
+
+<div class="screen-bar">
+  <a href="/admin/payouts/{{ run.id }}">&larr; Back to Run</a>
+  <button onclick="window.print()">Print / Save PDF</button>
+  <span>{{ rows|length }} statement{% if rows|length != 1 %}s{% endif %} &mdash; {{ run.period_start.strftime('%b %d') }}&ndash;{{ run.period_end.strftime('%b %d, %Y') }}</span>
+</div>
+
+<div class="pages">
+{% for row in rows %}
+<div class="statement">
+
+  <div class="header">
+    <div class="gallery-name">{{ gallery_name }}</div>
+    <div class="statement-title">Artist Payout Statement</div>
+  </div>
+
+  <div class="meta">
+    <div class="meta-block">
+      <label>Artist</label>
+      <div class="value">{{ row.artist_name }}</div>
+    </div>
+    <div class="meta-block">
+      <label>Period</label>
+      <div class="value">{{ run.period_start.strftime('%B %d, %Y') }} &ndash; {{ run.period_end.strftime('%B %d, %Y') }}</div>
+    </div>
+    <div class="meta-block">
+      <label>Status</label>
+      <div class="value">{{ row.status | capitalize }}</div>
+    </div>
+    {% if row.settled_at %}
+    <div class="meta-block">
+      <label>Paid</label>
+      <div class="value">{{ row.settled_at.strftime('%B %d, %Y') }}</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th class="right">Sale Amount</th>
+        <th class="right">Commission</th>
+        <th class="right">Net</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% if row.sale_items %}
+      {% for item in row.sale_items %}
+      <tr>
+        <td>{{ item.occurred_at.strftime('%b %d, %Y') }}</td>
+        <td class="right">${{ "%.2f"|format(item.amount_cents/100) }}</td>
+        <td class="right" style="color:#888;">${{ "%.2f"|format(item.commission_cents/100) }}</td>
+        <td class="right">${{ "%.2f"|format(item.net_cents/100) }}</td>
+      </tr>
+      {% endfor %}
+    {% else %}
+      <tr><td colspan="4" class="no-items">No individual sale records available.</td></tr>
+    {% endif %}
+    </tbody>
+  </table>
+
+  <div class="totals">
+    <div class="totals-row">
+      <span>Sales Total</span>
+      <span>${{ "%.2f"|format(row.sales_total_cents/100) }}</span>
+    </div>
+    <div class="totals-row deduction">
+      <span>Gallery Commission</span>
+      <span>&minus;${{ "%.2f"|format(row.commission_cents/100) }}</span>
+    </div>
+    {% if row.rent_deduction_cents > 0 %}
+    <div class="totals-row deduction">
+      <span>Rent Deduction</span>
+      <span>&minus;${{ "%.2f"|format(row.rent_deduction_cents/100) }}</span>
+    </div>
+    {% endif %}
+    <div class="totals-row net">
+      <span>Net Payout</span>
+      <span>${{ "%.2f"|format(row.net_cents/100) }}</span>
+    </div>
+  </div>
+
+  {% if row.method %}
+  <div class="status-note">Payment method: {{ row.method | capitalize }}{% if row.settled_at %} &mdash; {{ row.settled_at.strftime('%B %d, %Y') }}{% endif %}</div>
+  {% endif %}
+
+  <div class="footer">
+    <div class="sig-block">Artist Signature</div>
+    <div class="sig-block">Date</div>
+    <div class="sig-block">Gallery Representative</div>
+  </div>
+
+</div>
+{% else %}
+<div class="statement">
+  <div class="header">
+    <div class="gallery-name">{{ gallery_name }}</div>
+    <div class="statement-title">Artist Payout Statement</div>
+  </div>
+  <p style="color:#888;margin-top:32px;text-align:center;">No payout lines for this run.</p>
+</div>
+{% endfor %}
+</div>
+
+</body>
+</html>
