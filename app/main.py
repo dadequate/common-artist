@@ -5,8 +5,8 @@ from fastapi.staticfiles import StaticFiles
 
 from app.database import init_db
 from app.monitor import logger
-from app.routers import admin, applications, artists, booths, health, monitor, payouts, portal, rent, sales, sync
-import app.templates_env  # noqa: F401 -- registers gallery_name global on import
+from app.routers import admin, applications, artists, booths, health, monitor, payouts, portal, rent, sales, settings, sync
+import app.templates_env  # noqa: F401
 
 
 @asynccontextmanager
@@ -19,6 +19,10 @@ async def lifespan(app: FastAPI):
         logger.warning("commonartist.startup.insecure_cookies",
                        note="Set BASE_URL=https://... to enable Secure cookie flag")
     await init_db()
+    from app.database import AsyncSessionLocal
+    from app import settings_store
+    async with AsyncSessionLocal() as db:
+        await settings_store.load_all(db)
     logger.info("commonartist.startup", version="0.1.0")
     yield
     logger.info("commonartist.shutdown")
@@ -45,4 +49,5 @@ app.include_router(payouts.router)
 app.include_router(portal.router)
 app.include_router(rent.router)
 app.include_router(sales.router)
+app.include_router(settings.router)
 app.include_router(sync.router)

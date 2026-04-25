@@ -48,6 +48,13 @@ body { font-family: var(--font); background: var(--bg); color: #333; font-size: 
   height: 52px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50;
 }
 .topbar-title { font-size: 16px; font-weight: 600; }
+.topbar-search { flex: 1; display: flex; justify-content: center; padding: 0 24px; }
+.topbar-search input {
+  width: 100%; max-width: 320px; padding: 7px 14px; border: 1px solid var(--border);
+  border-radius: 20px; font-size: 13px; background: var(--bg); outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.topbar-search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(211,81,71,.1); }
 .page { padding: 24px; }
 
 /* ── Cards ── */

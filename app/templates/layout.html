@@ -10,7 +10,7 @@
 <body>
 <div class="app">
   <aside class="sidebar">
-    <div class="sidebar-logo">{{ gallery_name }}<span>Gallery Management</span></div>
+    <div class="sidebar-logo">{{ gallery_name }}<span>CommonArtist v{{ app_version }}</span></div>
     <nav class="sidebar-nav">
       <div class="sidebar-section">Main</div>
       <a href="/admin/" {% if active == 'dashboard' %}class="active"{% endif %}>Dashboard</a>
@@ -23,6 +23,7 @@
       <a href="/sync/status" {% if active == 'sync' %}class="active"{% endif %}>POS Sync</a>
       <div class="sidebar-section">System</div>
       <a href="/admin/monitor" {% if active == 'monitor' %}class="active"{% endif %}>Monitor + AI</a>
+      <a href="/admin/settings" {% if active == 'settings' %}class="active"{% endif %}>Settings</a>
     </nav>
     <div class="sidebar-footer">
       <a href="/admin/logout" class="sidebar-nav" style="display:block;padding:9px 18px;color:rgba(255,255,255,.6);text-decoration:none;font-size:13px;">Logout</a>
@@ -31,6 +32,10 @@
   <div class="main">
     <div class="topbar">
       <span class="topbar-title">{% block topbar_title %}{% endblock %}</span>
+      <form method="get" action="/admin/artists" class="topbar-search">
+        <input type="text" name="q" placeholder="Search artists..." autocomplete="off"
+          value="{{ request.query_params.get('q', '') if request.url.path == '/admin/artists' else '' }}">
+      </form>
       <div>{% block topbar_actions %}{% endblock %}</div>
     </div>
     <div class="page">

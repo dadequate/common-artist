@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from app.templates_env import templates
 from sqlalchemy import select
@@ -17,11 +17,26 @@ router = APIRouter(tags=["artists"])
 
 
 @router.get("/admin/artists", response_class=HTMLResponse)
-async def artist_list(request: Request, status: str = "all", db: AsyncSession = Depends(get_db), _: str = Depends(require_admin)):
-    q = select(Artist)
+async def artist_list(
+    request: Request,
+    status: str = "all",
+    q: str = Query(default=""),
+    db: AsyncSession = Depends(get_db),
+    _: str = Depends(require_admin),
+):
+    query = select(Artist)
     if status != "all":
-        q = q.where(Artist.status == status)
-    result = await db.execute(q.order_by(Artist.name))
+        query = query.where(Artist.status == status)
+    if q:
+        from sqlalchemy import or_, func as sqlfunc
+        term = f"%{q.lower()}%"
+        query = query.where(
+            or_(
+                sqlfunc.lower(Artist.name).like(term),
+                sqlfunc.lower(Artist.email).like(term),
+            )
+        )
+    result = await db.execute(query.order_by(Artist.name))
     artists = result.scalars().all()
 
     rows = []
@@ -40,8 +55,8 @@ async def artist_list(request: Request, status: str = "all", db: AsyncSession = 
         rows.append({**a.__dict__, "booth_name": booth_name, "rent_balance": rent_balance})
 
     return templates.TemplateResponse(request, "admin/artists/list.html", {
-         "active": "artists",
-        "artists": rows, "status_filter": status,
+        "active": "artists",
+        "artists": rows, "status_filter": status, "search_q": q,
     })
 
 

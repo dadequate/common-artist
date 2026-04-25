@@ -1,0 +1,99 @@
+{% extends "layout.html" %}
+{% block title %}Settings{% endblock %}
+{% block topbar_title %}Settings{% endblock %}
+
+{% block content %}
+{% if saved %}
+<div class="alert alert-success">Settings saved.</div>
+{% endif %}
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;">
+
+<div>
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-header">Gallery</div>
+    <div class="card-body">
+      <form method="post" action="/admin/settings">
+        <div class="form-group">
+          <label>Gallery Name</label>
+          <input type="text" name="gallery_name" value="{{ fields.gallery_name }}" required placeholder="My Co-op Gallery">
+          <div style="font-size:12px;color:var(--label);margin-top:4px;">Shown in the sidebar, emails, and payout statements.</div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-header">Coming in v0.2</div>
+    <div class="card-body" style="color:var(--label);font-size:13px;">
+      <ul style="padding-left:18px;line-height:2;">
+        <li>Default commission rate</li>
+        <li>Minimum payout threshold</li>
+        <li>Seasonal rate overrides</li>
+        <li>Notification email address</li>
+        <li>Admin user accounts</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">Coming in v0.3</div>
+    <div class="card-body" style="color:var(--label);font-size:13px;">
+      <ul style="padding-left:18px;line-height:2;">
+        <li>Stripe Connect onboarding</li>
+        <li>ACH payout settings</li>
+        <li>Year-end tax export</li>
+        <li>Data export &amp; GDPR tools</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div>
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-header">Environment</div>
+    <div class="card-body">
+      <p style="font-size:12px;color:var(--label);margin-bottom:14px;">These are configured via environment variables on your server.</p>
+      <table style="width:100%;font-size:13px;">
+        <thead><tr>
+          <th style="text-align:left;padding:4px 0;color:var(--label);font-size:11px;text-transform:uppercase;letter-spacing:.5px;">Setting</th>
+          <th style="text-align:left;padding:4px 0;color:var(--label);font-size:11px;text-transform:uppercase;letter-spacing:.5px;">Value</th>
+        </tr></thead>
+        <tbody>
+        {% for ev in env_vars %}
+        <tr style="border-top:1px solid var(--border-light);">
+          <td style="padding:7px 0;font-weight:500;">{{ ev.label }}</td>
+          <td style="padding:7px 0;font-family:monospace;font-size:12px;color:var(--muted);">{{ ev.value }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">About</div>
+    <div class="card-body" style="font-size:13px;">
+      <table style="width:100%;">
+        <tr>
+          <td style="color:var(--label);padding:5px 0;">Version</td>
+          <td style="font-family:monospace;">CommonArtist v{{ app_version }}</td>
+        </tr>
+        <tr style="border-top:1px solid var(--border-light);">
+          <td style="color:var(--label);padding:5px 0;">License</td>
+          <td>MIT</td>
+        </tr>
+        <tr style="border-top:1px solid var(--border-light);">
+          <td style="color:var(--label);padding:5px 0;">Source</td>
+          <td><a href="https://github.com/dadequate/common-artist" target="_blank" style="color:var(--blue);">github.com/dadequate/common-artist</a></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div>
+{% endblock %}

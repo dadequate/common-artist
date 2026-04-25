@@ -4,6 +4,7 @@ from app.models.sales import Sale, SaleLineItem
 from app.models.payouts import PayoutRun, PayoutLine
 from app.models.admin import AdminUser
 from app.models.monitor import SyncCursor, ErrorLog
+from app.models.settings import AppSetting
 
 __all__ = [
     "Artist", "ArtistUser", "Agreement", "Application",
@@ -12,4 +13,5 @@ __all__ = [
     "PayoutRun", "PayoutLine",
     "AdminUser",
     "SyncCursor", "ErrorLog",
+    "AppSetting",
 ]
